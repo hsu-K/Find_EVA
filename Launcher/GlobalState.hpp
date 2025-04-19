@@ -61,6 +61,12 @@ public:
 	// 獲取線程池大小
 	size_t getThreadPoolSize();
 
+	// 獲取線程的原生句柄
+	HANDLE getThreadNativeHandle(size_t index);
+
+	// 取消線程的同步 I/O 操作
+	bool cancelThreadIO(size_t index);
+
 private:
 	static std::shared_ptr<GlobalState> _instance;
 	std::shared_ptr<Frame> frameCurr;
@@ -70,6 +76,7 @@ private:
 	DWORD pids[MAX_CHILD] = { 0 };
 
 	std::vector<std::shared_ptr<std::thread>> threadPool;
+	std::vector<HANDLE> threadNativeHandles;  // 存儲線程的原生句柄
 	// 保護線程池的互斥鎖
 	std::mutex threadPoolMutex;
 };

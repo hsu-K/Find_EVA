@@ -1,6 +1,7 @@
 #include "ThreadManager.hpp"
 #include <windows.h>
 #include "communication.h"
+#include "PipeManager.hpp"
 
 void ThreadManager::startListenerThread()
 {
@@ -65,45 +66,44 @@ DWORD WINAPI ThreadManager::ListenerThreadEntry()
 				CloseHandle(InstancePipe);
 				break;
 			}
+			else {
+				std::cout << err << std::endl;
+				break;
+			}
 		}
-		else {
 #ifdef _DEBUG
-			printf("[LISTENER] New client connection obtained!\n");
+		printf("[LISTENER] New client connection obtained!\n");
 #endif
-			// 判斷是否超過最大可用的回應線程(20)
-			if (GlobalState::GetInst()->getThreadPoolSize() >= MAX_CHILD) {
-				printf("Exceeded max available responder threads!\n");
-				continue;
-			}
+		// 判斷是否超過最大可用的回應線程(20)
 
-			// 創建響應線程
-			try {
-				auto responderThread = std::make_shared<std::thread>(&ThreadManager::ResponderThreadEntry, this, InstancePipe);
+		if (GlobalState::GetInst()->getThreadPoolSize() >= MAX_CHILD) {
+			printf("Exceeded max available responder threads!\n");
+			continue;
+		}
 
-				// 添加到 GlobalState 的線程池
-				GlobalState::GetInst()->addThread(responderThread);
+		// 創建響應線程
+		try {
+			auto responderThread = std::make_shared<std::thread>(&ThreadManager::ResponderThreadEntry, this, InstancePipe);
+			// 添加到 GlobalState 的線程池
+			GlobalState::GetInst()->addThread(responderThread);
 
-				// 記錄線程已創建的信息
-				std::cout << "Created responder thread and added to thread pool." << std::endl;
-			}
-			catch (const std::exception& e) {
-				fprintf(stderr, "Could not create responder thread: %s\n", e.what());
-				return 0;
-			}
+			// 記錄線程已創建的信息
+			std::cout << "Created responder thread and added to thread pool." << std::endl;
+		}
+		catch (const std::exception& e) {
+			fprintf(stderr, "Could not create responder thread: %s\n", e.what());
+			return 0;
 		}
 
 		CloseHandle(ol.hEvent);
 
-#ifdef _DEBUG
-		printf("[LISTENER] New client connection obtained!\n");
-#endif
 	}
 	return 1;
 }
 
 DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 {
-	
+	std::cout << "ResponderThreadEntry創建成功" << std::endl;
 	DWORD tid = GetCurrentThreadId();	// 取得當前執行緒的 ID
 
 	// 安全地增加並獲取一個索引值
@@ -113,7 +113,7 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 	printf("[RESPONDER %lu] Transfering mutations to new process.\n", tid);
 #endif
 	// 將frameCurr的每個突變資料傳送到管道，讓DLL可以接收
-	//TransferMutations(hPipe);
+	PipeManager::TransferMutations(hPipe);
 
 	// 檢查SyncEvent是否已設置，如有，則繼續讀取管道的Mutation的Recording
 	while (WaitForSingleObject(*(GlobalState::GetInst()->get_SyncEvent().get()), 0) != WAIT_OBJECT_0) {

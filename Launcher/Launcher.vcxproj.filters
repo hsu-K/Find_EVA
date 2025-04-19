@@ -47,5 +47,14 @@
     <ClInclude Include="ThreadManager.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="CoreUtil.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="Launcher_MiscUtil.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="PipeManager.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

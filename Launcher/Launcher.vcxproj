@@ -133,10 +133,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="communication.h" />
+    <ClInclude Include="CoreUtil.hpp" />
     <ClInclude Include="Execution.hpp" />
     <ClInclude Include="Frame.hpp" />
     <ClInclude Include="GlobalState.hpp" />
+    <ClInclude Include="Launcher_MiscUtil.hpp" />
     <ClInclude Include="Mutation.hpp" />
+    <ClInclude Include="PipeManager.hpp" />
     <ClInclude Include="Recording.hpp" />
     <ClInclude Include="ThreadManager.hpp" />
   </ItemGroup>

@@ -6,7 +6,7 @@
 #include "GlobalState.hpp"
 #include "Launcher_MiscUtil.hpp"
 
-#define LAUNCH_TIME_LIMIT 25000 // 2.5 seconds
+#define LAUNCH_TIME_LIMIT 2500 // 2.5 seconds
 
 class CoreUtil
 {
@@ -86,6 +86,7 @@ public:
 			return -1;
 		}
 
+		
 		// problem
 		// DLL注入，注意DLL的路徑(存在TARGET_DLL)
 		// allocate memory for dll name(分配記憶體給dll路徑)
@@ -99,6 +100,7 @@ public:
 			return -1;
 		}
 
+		
 		// write dll name in target memory(寫入dll路徑到記憶體)
 		if (!WriteProcessMemory(pi.hProcess, dllname, TARGET_DLL, lendll, NULL))
 		{
@@ -156,6 +158,7 @@ public:
 			CloseHandle(pi.hThread);
 			return -1;
 		}
+		
 
 		// resume the original suspended target process (primary thread)
 		// 恢復目標進程的主線程執行
@@ -197,10 +200,6 @@ public:
 			}
 		}
 
-		//wait = WaitForSingleObject(pi.hProcess, LAUNCH_TIME_LIMIT);
-		//if (wait == WAIT_TIMEOUT) {
-		//	printf("目標進程超時，限制時間為：%d\n", LAUNCH_TIME_LIMIT);
-		//}
 
 
 		printf("目標進程結束\n");
@@ -210,10 +209,25 @@ public:
 
 		// 獲取線程池大小
 		size_t threadCount = GlobalState::GetInst()->getThreadPoolSize();
+
+		// 先取消所有線程的同步 I/O 操作
+		for (int i = static_cast<int>(threadCount) - 1; i >= 0; i--) {
+			try {
+				// 取消同步 I/O 操作
+				if (!GlobalState::GetInst()->cancelThreadIO(i)) {
+					std::cerr << "無法取消線程的同步 I/O 操作: " << i << std::endl;
+				}
+			}
+			catch (const std::exception& e) {
+				std::cerr << "取消同步 I/O 時發生錯誤: " << e.what() << std::endl;
+			}
+		}
+
+		// 移除所有線程
 		for (int i = static_cast<int>(threadCount) - 1; i >= 0; i--) {
 			try {
 				if (!GlobalState::GetInst()->removeThread(i)) {
-					std::cerr << "Failed to remove thread from pool." << std::endl;
+					std::cerr << "無法從線程池移除線程: " << i << std::endl;
 				}
 			}
 			catch (const std::exception& e) {

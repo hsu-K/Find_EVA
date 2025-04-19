@@ -23,6 +23,7 @@ union MutationValue {
 };
 
 class Mutation {
+public:
 	// mutation
 	MutationType mutType;
 	MutationValue mutValue;

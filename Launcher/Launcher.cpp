@@ -14,7 +14,9 @@
 int main(int argc, char* argv[])
 {
 	char* path = NULL;
-	std::string strPath = "C:\\Program_Code\\Find_Anti\\Final_Mut\\Debug\\test.exe";
+	//std::string strPath = "C:\\Program_Code\\Find_Anti\\WTF\\Debug\\test.exe";
+	//std::string strPath = "C:\\Program_Code\\Find_Anti\\Final_Mut\\Debug\\megbox_test.exe";
+	std::string strPath = "C:\\Program_Code\\Find_Anti\\Launcher\\Debug\\test.exe";
 	if (argc < 2) {
 		//fprintf(stderr, "Usage: EnviralLauncher.exe <target application>\n");
 		//return -1;
@@ -43,8 +45,10 @@ int main(int argc, char* argv[])
 	//LONG LcalRecIndex = InterlockedIncrement(&(GlobalState::GetInst()->get_frameCurr()->currExec->RecIndex));
 	//std::cout << LcalRecIndex << std::endl;
 	//std::cout << baseExec->RecIndex << std::endl;
+	//std::cout << GlobalState::GetInst()->get_frameCurr()->mutHead << std::endl;
 
 	CoreUtil::LaunchTarget(path);
+
 
 	system("pause");
 	threadManager.stopListenerThread();
