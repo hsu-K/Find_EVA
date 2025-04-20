@@ -5,6 +5,7 @@
 #define MAX_CHILD 20
 #define MAX_PID 100
 #define TARGET_DLL "mut_DLL.dll"
+
 // szPipeName為管道名稱
 static wchar_t szShMemName[] = L"EnviralMap";
 static wchar_t szPipeName[] = L"\\\\.\\pipe\\EnviralPipe";

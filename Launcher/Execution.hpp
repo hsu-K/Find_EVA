@@ -4,21 +4,25 @@
 #include "communication.h"
 
 
-struct RecordList {
+class RecordList {
+public:
+	RecordList() : rec(), next(nullptr) {}
 	Recording rec;
 	RecordList* next;
 };
 
 // per-instance recording (1 per connecting process)
 // 管理每個處理程序的本地記錄
-struct LocalRecording {
+class LocalRecording {
+public:
 	// NOTE: this list grows backwards, the last call is the head.(記錄列表是反向增長的(最後的呼叫在頭部))
 	RecordList* recHead = nullptr;		// 記錄列表的頭部
 	RecordList* recCurr = nullptr;		// 當前記錄
 };
 
 // 追蹤 API 呼叫的來源
-struct Origins {
+class Origins {
+public:
 	UINT64 origin;
 	Origins* next;
 };

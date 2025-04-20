@@ -123,20 +123,23 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 		// 讀取管道的Mutation的Recording(從DLL來的)
 		BOOL rd = ReadFile(hPipe, (void*)&rec, sizeof(rec), &dwRead, NULL);
 		if (rd) {
+			std::cout << DebugCallNames[rec.call] << std::endl;
 
-			/*
 			// 將讀取到的Recording加入到frameCurr的currExec的本地記錄中
-			AddRecordToList(frameCurr->currExec, &rec, LocalRecIndex);
+			std::shared_ptr<Frame> frameCurr= GlobalState::GetInst()->get_frameCurr();
+			PipeManager::AddRecordToList(frameCurr->currExec, &rec, LocalRecIndex);
 
+			
 			// 檢查rec是否是CreateProcessInternalW這個Windows API
 			if (rec.call == Call::cCreateProcessInternalW) {
 #ifdef __DEBUG_PRINT
 				printf("We found creation of PID: %u\n", rec.value.dwCtx);
 #endif
 				// 檢查是否超過上限(100)，並將其加入到pids陣列中
-				if (pidptr < MAX_PIDS) {
-					pids[pidptr] = rec.value.dwCtx;
-					pidptr++;
+				if (GlobalState::GetInst()->get_pidptr() < MAX_PID) {
+					GlobalState::GetInst()->set_pids(GlobalState::GetInst()->get_pidptr(), rec.value.dwCtx);
+					//pids[pidptr] = rec.value.dwCtx;
+					GlobalState::GetInst()->set_pidptr(GlobalState::GetInst()->get_pidptr() + 1);
 				}
 			}
 
@@ -163,7 +166,6 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 				printf("[RESPONDER %lu] Unexpected fatal ReadFile error: %ld\n", tid, err);
 			}
 			break;
-			*/
 		}
 	}
 #ifdef __DEBUG_PRINT

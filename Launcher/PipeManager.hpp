@@ -31,5 +31,21 @@ public:
 
 		return 1;
 	}
+
+	static int AddRecordToList(Execution* exec, Recording* rec, LONG index) {
+		// if initail recHead is nullptr
+		// recHead always be the newest RecordList
+		RecordList* newRec = new RecordList();
+		if (newRec == nullptr) {
+			printf("Failed to allocate memory for RecordList\n");
+			return -1;
+		}
+		newRec->next = exec->recordings[index].recHead;
+		exec->recordings[index].recHead = newRec;
+		exec->recordings[index].recHead->rec = *rec;
+
+		//std::cout << exec->recordings[index].recHead->next << std::endl;
+		return 1;
+	}
 };
 

@@ -18,6 +18,7 @@ union ContextValue {
 
 // 魁琌ぐ或ㄧ计のㄤ把计
 class Recording {
+public:
 	Call call;
 	ContextType type;
 	ContextValue value;
