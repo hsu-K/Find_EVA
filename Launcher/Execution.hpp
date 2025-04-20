@@ -7,6 +7,9 @@
 class RecordList {
 public:
 	RecordList() : rec(), next(nullptr) {}
+	~RecordList() {
+		//std::cout << "RecordList is destructed" << std::endl;
+	}
 	Recording rec;
 	RecordList* next;
 };
@@ -55,6 +58,28 @@ public:
 
 
 	~Execution() {
+		// 釋放Origins*的記憶體
+		for (int i = 0; i < CALL_END; i++) {
+			Origins* oloop = CallOrigins[i];
+			while (oloop != NULL) {
+				Origins* otemp = oloop->next;
+				delete oloop;
+				oloop = otemp;
+			}
+		}
+
+		// 釋放記錄列表的記憶體
+		for (int i = 0; i <= RecIndex; i++) {
+			RecordList* entry = this->recordings[i].recHead;
+			while (entry != nullptr) {
+				RecordList* temp = entry;
+				entry = entry->next;
+				delete temp;
+			}
+			this->recordings[i].recHead = nullptr;	// 設定記錄列表的頭部為空
+			this->recordings[i].recCurr = nullptr;	// 設定當前記錄為空
+		}
+
 #ifdef __DEBUG
 		std::cout << "Execution is destructed" << std::endl;
 #endif

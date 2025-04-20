@@ -56,5 +56,17 @@
     <ClInclude Include="PipeManager.hpp">
       <Filter>標頭檔</Filter>
     </ClInclude>
+    <ClInclude Include="CalculateUtil.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="LogUtil.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="MutationController.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
+    <ClInclude Include="RecordingController.hpp">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

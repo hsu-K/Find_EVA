@@ -132,15 +132,19 @@
     <ClCompile Include="ThreadManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CalculateUtil.hpp" />
     <ClInclude Include="communication.h" />
     <ClInclude Include="CoreUtil.hpp" />
     <ClInclude Include="Execution.hpp" />
     <ClInclude Include="Frame.hpp" />
     <ClInclude Include="GlobalState.hpp" />
     <ClInclude Include="Launcher_MiscUtil.hpp" />
+    <ClInclude Include="LogUtil.hpp" />
     <ClInclude Include="Mutation.hpp" />
+    <ClInclude Include="MutationController.hpp" />
     <ClInclude Include="PipeManager.hpp" />
     <ClInclude Include="Recording.hpp" />
+    <ClInclude Include="RecordingController.hpp" />
     <ClInclude Include="ThreadManager.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

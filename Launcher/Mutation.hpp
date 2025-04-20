@@ -24,6 +24,7 @@ union MutationValue {
 
 class Mutation {
 public:
+	Mutation() : mutType(MUT_FAIL), mutValue(), rec(), next(nullptr) {}
 	// mutation
 	MutationType mutType;
 	MutationValue mutValue;

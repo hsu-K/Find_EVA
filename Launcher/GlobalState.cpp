@@ -16,6 +16,8 @@ bool GlobalState::removeThread(size_t index)
 {
 	std::unique_lock<std::mutex> lock(threadPoolMutex);
 	if (index < threadPool.size()) {
+
+
 		if (threadPool[index]->joinable()) {
 			threadPool[index]->join();
 		}

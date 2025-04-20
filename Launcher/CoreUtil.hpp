@@ -5,8 +5,14 @@
 #include <tlhelp32.h>
 #include "GlobalState.hpp"
 #include "Launcher_MiscUtil.hpp"
+#include "LogUtil.hpp"
+#include "CalculateUtil.hpp"
+#include "MutationController.hpp"
+#include "RecordingController.hpp"
 
 #define LAUNCH_TIME_LIMIT 2500 // 2.5 seconds
+#define MUTATE_TIME_LIMIT 50000 // 50 seconds
+#define GAIN_THRESHOLD 1
 
 class CoreUtil
 {
@@ -56,7 +62,6 @@ public:
 
 		} while (Process32Next(hProcessSnap, &pe32));
 	}
-
 
 	// 啟動目標進程並注入DLL
 	static int LaunchTarget(char* target, bool* time_out = nullptr)
@@ -223,6 +228,7 @@ public:
 			}
 		}
 
+		std::cout << "結束進程同步" << std::endl;
 		// 移除所有線程
 		for (int i = static_cast<int>(threadCount) - 1; i >= 0; i--) {
 			try {
@@ -253,6 +259,232 @@ public:
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		return 0;
+	}
+
+	static int RunExploration(char* path, Execution* baseExec, ULONG* cycle, ULONG* volapplied) {
+		std::cout << baseExec << std::endl;
+		BOOL getMut = FALSE;
+		LONG recindex = 0;
+		RecordList* vol = nullptr;
+		LONG gain = 0;
+		std::shared_ptr<Frame> frameCurr = GlobalState::GetInst()->get_frameCurr();
+		// 設置時間限制
+		DWORD CurTime = timeGetTime(); // milliseconds
+		DWORD EndTime = CurTime + MUTATE_TIME_LIMIT; // s * 1000 (30)
+		int exit = 0;
+
+		
+		// to store newExec
+		std::vector<std::shared_ptr<Execution>> executions;
+		std::shared_ptr<Execution> newExec = nullptr;
+		while (CurTime < EndTime) {
+			getMut = FALSE;
+			printf("PH3: Cycle %d\n", *cycle);
+			//紀錄每次的執行，方便進行回溯
+			// 如果當前的執行是第一次執行，則將第一次執行設置為當前執行，並且初始化時base->next 不會被設置
+			if (frameCurr->currExec == baseExec) {
+				newExec = std::make_shared<Execution>(baseExec, nullptr, TRUE);
+			}
+			else {
+				newExec = std::make_shared<Execution>(frameCurr->currExec, nullptr, FALSE);
+			}
+			executions.push_back(newExec);
+			frameCurr->currExec = newExec.get();
+			
+#ifdef __DEBUG
+			printf("Launching target.\n");
+#endif
+
+			// Run next execution
+			bool time_out = false;
+			LaunchTarget(path, &time_out);
+
+			// Generate the equalized call counts
+			CalculateUtil::GenerateUniqueCallcounts(frameCurr->currExec);
+
+			// 輸出所有Recording 
+			LogUtil::PrintRecordList(frameCurr->currExec, 0);
+
+
+			// 判斷是否有超時，優先級最高
+			if (time_out) {
+				printf("Target process time out, try generate BlockingMutation\n");
+				if (MutationController::GenerateBlockingMutation(frameCurr->currExec)) {
+					printf("Generate BlockingMutation success!\n");
+					// 成功找到變異
+					getMut = TRUE;
+					// 重製recindex
+					recindex = 0;
+				}
+			}
+
+			if (!getMut && vol) {
+				if (MutationController::GenerateResponsiveMutationsAll(frameCurr->currExec)) {
+
+					// 如果這個Volatile突變可以觸發新的Mutation，則表示是有效的，需要保留
+					// 並且跳過下一個循環的突變生成，因為已經完成了
+					getMut = TRUE;
+					recindex = 0;
+					vol = nullptr;
+					(*volapplied)++;
+#ifdef __DEBUG_PRINT
+					printf("[new!!] Volatile mutation resulted in stable gain. Keep.\n");
+#endif
+				}
+				else {
+					// 若沒有產生新的Responsive Muatation，則計算其活動增益
+					gain = CalculateUtil::CalculateActivityGain(frameCurr->currExec); // IsActivityGainExtended
+					// 如果大於閥值就保留，否則丟棄
+					if (gain >= GAIN_THRESHOLD) {
+						recindex = 0;
+						vol = NULL;
+						(*volapplied)++;
+#ifdef __DEBUG_PRINT
+						printf("Gainful volatile mutation. Keep.\n");
+#endif
+					}
+					else {
+#ifdef __DEBUG_PRINT
+						printf("Gainless volatile mutation. Discard/Reset.\n");
+#endif
+						// 回溯到上一個Exec，如果先現在就是firstExec就回復baseExec
+						if (frameCurr->currExec == frameCurr->firstExec) {
+							// the first exec has no prev.
+							executions.pop_back();
+							//DestroyExecution(frameCurr->currExec);
+							frameCurr->currExec = baseExec;
+							frameCurr->firstExec = nullptr;
+						}
+						else {
+							// reset currExec back to prev
+							//temp = frameCurr->currExec->prev;
+							//DestroyExecution(frameCurr->currExec);
+							//frameCurr->currExec = temp;
+							executions.pop_back();
+							frameCurr->currExec = executions.back().get();
+							frameCurr->currExec->next = nullptr;
+						}
+
+						// reset mutation list 重製突變列表
+						if (frameCurr->currExec->mutStore == nullptr) {
+							// no previous mutations, empty mutation list.
+							// 沒有上一個突變，清空突變列表
+#ifdef __DEBUG_PRINT
+							printf("No previous mutations. Destroy mutation list.\n");
+#endif
+							MutationController::DestroyMutationList();
+							frameCurr->mutHead = nullptr;
+							frameCurr->mutCurr = nullptr;
+							frameCurr->dwMutationCount = 0;
+						}
+						else {
+							// reset the mutations to what is stored in currExec
+#ifdef __DEBUG_PRINT
+							printf("Reset mutations to past mutStore.\n");
+#endif
+							// 將Frame儲存的Mutation回到上一個Exec的Mutation的狀態
+							frameCurr->mutCurr = frameCurr->currExec->mutStore;
+
+							// remove unwanted mutations
+							Mutation* del = frameCurr->mutCurr->next;
+							Mutation* tmp = nullptr;
+							while (del != nullptr) {
+								tmp = del->next;
+								delete del;
+								del = tmp;
+								frameCurr->dwMutationCount--;
+							}
+
+							// reset the end of the mutations
+							frameCurr->mutCurr->next = nullptr;
+						}
+
+						// 當變異失效後，尋找下一個可用的變異點(往回找之前呼叫過的函數，因為是反向指針)
+						BOOL NoCallsLeftToMutate = FALSE;
+						RecordList* nextStart = vol->next;
+						if (nextStart != nullptr) {
+							// 檢查是否為相同呼叫，避免對相同類型的呼叫重複變異
+							while (RecordingController::IsRecordingIdentical(&vol->rec, &nextStart->rec)) {
+#ifdef __DEBUG_PRINT
+								printf("Finding Next Entry Point: %s is identical (skip!)\n", DebugCallNames[nextStart->rec.call]);
+#endif
+								// 發現這個Recording是相同的就再繼續往回找，直到找到不同的或是找不到(遇到NULL)
+								nextStart = nextStart->next;
+								if (nextStart == nullptr) {
+#ifdef __DEBUG_PRINT
+									printf("The next entry point is NULL so that aint great\n");
+#endif
+									NoCallsLeftToMutate = TRUE;
+									break;
+								}
+							}
+						}
+						else {
+							// nextStart is NULL, no next call in this process
+							NoCallsLeftToMutate = TRUE;
+						}
+
+
+						// if no calls can be found, we increase the RecIndex, as long as it is in bounds for RecIndex.
+						// 如果沒有找到可變異的呼叫，就去尋找下一個進程(在RecIndex的範圍內允許)
+						if (NoCallsLeftToMutate) {
+#ifdef __DEBUG_PRINT
+							printf("There are no calls left to mutate in the current RecIndex.\n");
+#endif
+							if (recindex + 1 > frameCurr->currExec->RecIndex) {
+								// nothing left to mutate
+#ifdef __DEBUG_PRINT
+								printf("There are no other process recordings left to mutate. Exit loop.\n");
+#endif
+								exit = 2;
+								// 如果找不到就離開整個檢測
+								break;
+							}
+							recindex++;
+						}
+
+						// starting point for next search (can be NULL)
+						vol = nextStart;
+
+					}
+				}
+			}
+
+			if (!getMut) {
+				if (MutationController::GenerateResponsiveMutationsAll(frameCurr->currExec)) {
+#ifdef __DEBUG_PRINT
+					printf("There are stable mutations to apply.\n");
+#endif
+					getMut = TRUE;
+					recindex = 0;
+				}
+				else {
+#ifdef __DEBUG_PRINT
+					printf("No (new) stable mutations, try volatile.\n");
+#endif
+					// 嘗試生成新的Volatile突變，如果有生成就返回
+					vol = MutationController::GenerateResponsiveVolatileMutation(frameCurr->currExec, vol, &recindex);
+					if (vol == nullptr) {
+						// no volatile mutations to create - exit
+#ifdef __DEBUG_PRINT
+						printf("No volatile mutations to create. Exit loop.\n");
+#endif
+						exit = 1;
+						break;
+					}
+					else {
+#ifdef __DEBUG_PRINT
+						printf("生成Volatile mutation: %s\n", DebugCallNames[vol->rec.call]);
+#endif
+					}
+				}
+			}
+
+			(*cycle)++;
+			CurTime = timeGetTime();
+
+		}
+		return 1;
 	}
 };
 

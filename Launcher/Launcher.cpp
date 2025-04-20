@@ -6,9 +6,14 @@
 #include "GlobalState.hpp"
 #include "ThreadManager.hpp"
 #include "CoreUtil.hpp"
+#include "CalculateUtil.hpp"
+#include "LogUtil.hpp"
+
+#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Winmm.lib")
 
 
-
+#define __EXPERIMENT
 
 
 int main(int argc, char* argv[])
@@ -16,7 +21,7 @@ int main(int argc, char* argv[])
 	char* path = NULL;
 	//std::string strPath = "C:\\Program_Code\\Find_Anti\\WTF\\Debug\\test.exe";
 	//std::string strPath = "C:\\Program_Code\\Find_Anti\\Final_Mut\\Debug\\megbox_test.exe";
-	std::string strPath = "C:\\Program_Code\\Find_Anti\\Launcher\\Debug\\test.exe";
+	std::string strPath = "C:\\Program_Code\\Find_Anti\\Launcher\\Debug\\OpKey_check.exe";
 	if (argc < 2) {
 		//fprintf(stderr, "Usage: EnviralLauncher.exe <target application>\n");
 		//return -1;
@@ -27,9 +32,10 @@ int main(int argc, char* argv[])
 	}
 	printf("[Enviral Launcher] Init: %s\n", path);
 	
+	// create new Frame, and it is the frameCurr
 	GlobalState::GetInst()->set_frameCurr(std::make_shared<Frame>());
 
-	// 設置當前最佳Frame為frameCurr
+	// set the frameBest now is the frameCurr
 	GlobalState::GetInst()->set_frameBest(GlobalState::GetInst()->get_frameCurr());
 
 	// 首次執行，初始化baseExec並設置為當前Frame的currExec
@@ -37,17 +43,45 @@ int main(int argc, char* argv[])
 	GlobalState::GetInst()->get_frameCurr()->currExec = baseExec.get();
 
 	GlobalState::GetInst()->set_SyncEvent(std::make_shared<HANDLE>(CreateEventW(NULL, FALSE, FALSE, L"StopThreads")));
-
-
 	ThreadManager threadManager;
 	threadManager.startListenerThread();
 
-	//LONG LcalRecIndex = InterlockedIncrement(&(GlobalState::GetInst()->get_frameCurr()->currExec->RecIndex));
-	//std::cout << LcalRecIndex << std::endl;
-	//std::cout << baseExec->RecIndex << std::endl;
-	//std::cout << GlobalState::GetInst()->get_frameCurr()->mutHead << std::endl;
-
+	printf("[Enviral Launcher] Run: base1\n");
 	CoreUtil::LaunchTarget(path);
+	CalculateUtil::GenerateUniqueCallcounts(GlobalState::GetInst()->get_frameCurr()->currExec);
+
+# ifdef __DEBUG
+	LogUtil::PrintCallCounts(GlobalState::GetInst()->get_frameCurr()->currExec);
+#endif
+
+	// run Execution base2
+	std::shared_ptr<Execution> base2 = std::make_shared<Execution>(nullptr, nullptr, false);
+	if (base2 == nullptr) { return -1; }
+	GlobalState::GetInst()->get_frameCurr()->currExec = base2.get();
+	printf("[Enviral Launcher] Run: base2\n");
+	CoreUtil::LaunchTarget(path);
+	CalculateUtil::GenerateUniqueCallcounts(GlobalState::GetInst()->get_frameCurr()->currExec);
+
+	// run Execution base3
+	std::shared_ptr<Execution> base3 = std::make_shared<Execution>(nullptr, nullptr, false);
+	if (base3 == nullptr) { return -1; }
+	GlobalState::GetInst()->get_frameCurr()->currExec = base3.get();
+	printf("[Enviral Launcher] Run: base3\n");
+	CoreUtil::LaunchTarget(path);
+	CalculateUtil::GenerateUniqueCallcounts(GlobalState::GetInst()->get_frameCurr()->currExec);
+
+	// choose the best baseExec as the frameCurr
+	CalculateUtil::chooseBestCallCounts(GlobalState::GetInst()->get_frameCurr(), base2.get(), base3.get(), base3.get());
+
+
+#ifdef __EXPERIMENT
+	printf("----------------------__EXPERIMENT------------------------\n");
+#endif
+
+	ULONG cycles = 0;
+	ULONG volapplied = 0;
+
+	int exit = CoreUtil::RunExploration(path, GlobalState::GetInst()->get_frameCurr()->currExec, &cycles, &volapplied);
 
 
 	system("pause");
