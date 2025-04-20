@@ -16,5 +16,7 @@ private:
 
 	bool stopListener = false;
 	std::shared_ptr<std::thread> _listenerThread;
+
+	std::atomic<bool> shouldTerminate{ false };
 };
 

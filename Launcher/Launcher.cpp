@@ -84,6 +84,7 @@ int main(int argc, char* argv[])
 	int exit = CoreUtil::RunExploration(path, GlobalState::GetInst()->get_frameCurr()->currExec, &cycles, &volapplied);
 
 
-	system("pause");
+	//system("pause");
 	threadManager.stopListenerThread();
+	return 0;
 }

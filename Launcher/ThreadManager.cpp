@@ -103,72 +103,125 @@ DWORD WINAPI ThreadManager::ListenerThreadEntry()
 
 DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 {
-	std::cout << "ResponderThreadEntry創建成功" << std::endl;
-	DWORD tid = GetCurrentThreadId();	// 取得當前執行緒的 ID
 
-	// 安全地增加並獲取一個索引值
-	LONG LocalRecIndex = InterlockedIncrement(&(GlobalState::GetInst()->get_frameCurr()->currExec->RecIndex));
-#ifdef __DEBUG_PRINT
-	printf("This Responder Thread Gets Index: %ld\n", LocalRecIndex);
-	printf("[RESPONDER %lu] Transfering mutations to new process.\n", tid);
-#endif
-	// 將frameCurr的每個突變資料傳送到管道，讓DLL可以接收
-	PipeManager::TransferMutations(hPipe);
+    std::cout << "ResponderThreadEntry創建成功" << std::endl;
+    DWORD tid = GetCurrentThreadId();
 
-	// 檢查SyncEvent是否已設置，如有，則繼續讀取管道的Mutation的Recording
-	while (WaitForSingleObject(*(GlobalState::GetInst()->get_SyncEvent().get()), 0) != WAIT_OBJECT_0) {
-		Recording rec;
-		DWORD dwRead;
+    // 安全地增加並獲取一個索引值
+    LONG LocalRecIndex = InterlockedIncrement(&(GlobalState::GetInst()->get_frameCurr()->currExec->RecIndex));
 
-		// 讀取管道的Mutation的Recording(從DLL來的)
-		BOOL rd = ReadFile(hPipe, (void*)&rec, sizeof(rec), &dwRead, NULL);
-		if (rd) {
-			//std::cout << DebugCallNames[rec.call] << std::endl;
+    // 將 frameCurr 的每個突變資料傳送到管道
+    PipeManager::TransferMutations(hPipe);
 
-			// 將讀取到的Recording加入到frameCurr的currExec的本地記錄中
-			std::shared_ptr<Frame> frameCurr= GlobalState::GetInst()->get_frameCurr();
-			PipeManager::AddRecordToList(frameCurr->currExec, &rec, LocalRecIndex);
+    // 設置管道為非同步模式，這一步可能不需要，因為您已經在創建管道時使用了 FILE_FLAG_OVERLAPPED
+    // DWORD pipeMode = PIPE_READMODE_MESSAGE;
+    // SetNamedPipeHandleState(hPipe, &pipeMode, NULL, NULL);
 
-			
-			// 檢查rec是否是CreateProcessInternalW這個Windows API
-			if (rec.call == Call::cCreateProcessInternalW) {
+    // 檢查 SyncEvent 是否已設置
+    while (WaitForSingleObject(*(GlobalState::GetInst()->get_SyncEvent().get()), 0) != WAIT_OBJECT_0) {
+        if (shouldTerminate) {
+            break;
+        }
 
-				// 檢查是否超過上限(100)，並將其加入到pids陣列中
-				if (GlobalState::GetInst()->get_pidptr() < MAX_PID) {
-					GlobalState::GetInst()->set_pids(GlobalState::GetInst()->get_pidptr(), rec.value.dwCtx);
-					GlobalState::GetInst()->set_pidptr(GlobalState::GetInst()->get_pidptr() + 1);
-				}
-			}
+        // 初始化 OVERLAPPED 結構
+        OVERLAPPED ol = {};
+        ol.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+        if (!ol.hEvent) {
+            std::cerr << "無法創建事件句柄: " << GetLastError() << std::endl;
+            break;
+        }
 
-		}
-		else {
-			// ReadFile failed, if it is because ERROR_BROKEN_PIPE, then the client disconnected.
-			DWORD err = GetLastError();
+        Recording rec;
+        DWORD dwRead = 0;
 
-			// 客戶端斷開連接
-			if (err == ERROR_BROKEN_PIPE) {
-#ifdef __DEBUG_PRINT
-				printf("[RESPONDER %lu] No more reading, the client disconnected.\n", tid);
-#endif
-			}
-			// 客戶端取消操作
-			else if (err == ERROR_OPERATION_ABORTED) {
-#ifdef __DEBUG_PRINT
-				printf("[RESPONDER %lu] Cancelling ghost orphan child.\n", tid);
-#endif
-			}
-			else {
-				printf("[RESPONDER %lu] Unexpected fatal ReadFile error: %ld\n", tid, err);
-			}
-			break;
-		}
-	}
-#ifdef __DEBUG_PRINT
-	printf("[RESPONDER %lu] Shutting down gracefully.\n", tid);
-#endif	
+        // 非同步讀取數據
+        BOOL readSuccess = ReadFile(hPipe, &rec, sizeof(rec), NULL, &ol);
 
-	// 關閉管道
-	DisconnectNamedPipe(hPipe);
-	CloseHandle(hPipe);
+        // 檢查讀取操作是否立即完成
+        if (readSuccess) {
+            // 讀取立即完成，無需等待
+            if (!GetOverlappedResult(hPipe, &ol, &dwRead, FALSE)) {
+                std::cerr << "GetOverlappedResult 立即模式失敗: " << GetLastError() << std::endl;
+                CloseHandle(ol.hEvent);
+                break;
+            }
+        }
+        else {
+            // 檢查是否為非同步操作仍在進行中
+            DWORD lastError = GetLastError();
+            if (lastError != ERROR_IO_PENDING) {
+                if (lastError == ERROR_BROKEN_PIPE) {
+                    std::cout << "管道已關閉" << std::endl;
+                }
+                else if (lastError == ERROR_NO_DATA) {
+                    std::cout << "管道中無數據，等待 50ms 後重試" << std::endl;
+                    CloseHandle(ol.hEvent);
+                    Sleep(50);
+                    continue;
+                }
+                else {
+                    std::cerr << "ReadFile 失敗，錯誤碼: " << lastError << std::endl;
+                    CloseHandle(ol.hEvent);
+                    break;
+                }
+            }
+
+            // 等待最多 100ms，看看事件是否被觸發
+            DWORD dwWait = WaitForSingleObject(ol.hEvent, 100);
+
+            // 檢查等待結果
+            if (dwWait == WAIT_OBJECT_0) {
+                // 讀取操作已完成，獲取結果
+                if (!GetOverlappedResult(hPipe, &ol, &dwRead, FALSE)) {
+                    DWORD error = GetLastError();
+                    if (error == ERROR_BROKEN_PIPE) {
+                        std::cout << "管道已關閉" << std::endl;
+                    }
+                    else {
+                        std::cerr << "GetOverlappedResult 失敗: " << error << std::endl;
+                    }
+                    CloseHandle(ol.hEvent);
+                    break;
+                }
+            }
+            else if (dwWait == WAIT_TIMEOUT) {
+                // 超時，取消操作並繼續下一輪
+                CancelIoEx(hPipe, &ol);
+                CloseHandle(ol.hEvent);
+                continue;
+            }
+            else {
+                // 等待失敗
+                std::cerr << "WaitForSingleObject 失敗: " << GetLastError() << std::endl;
+                CloseHandle(ol.hEvent);
+                break;
+            }
+        }
+
+        // 檢查是否真正讀取到數據
+        if (dwRead == sizeof(rec)) {
+            std::cout << DebugCallNames[rec.call] << std::endl;
+
+            // 將讀取到的 Recording 加入到 frameCurr 的 currExec 的本地記錄中
+            std::shared_ptr<Frame> frameCurr = GlobalState::GetInst()->get_frameCurr();
+            PipeManager::AddRecordToList(frameCurr->currExec, &rec, LocalRecIndex);
+
+            // 檢查 rec 是否是 CreateProcessInternalW
+            if (rec.call == Call::cCreateProcessInternalW) {
+                // 檢查是否超過上限並加入到 pids 陣列
+                if (GlobalState::GetInst()->get_pidptr() < MAX_PID) {
+                    GlobalState::GetInst()->set_pids(GlobalState::GetInst()->get_pidptr(), rec.value.dwCtx);
+                    GlobalState::GetInst()->set_pidptr(GlobalState::GetInst()->get_pidptr() + 1);
+                }
+            }
+        }
+
+        // 關閉事件句柄
+        CloseHandle(ol.hEvent);
+    }
+
+    // 關閉管道
+    DisconnectNamedPipe(hPipe);
+    CloseHandle(hPipe);
 	return 1;
 }

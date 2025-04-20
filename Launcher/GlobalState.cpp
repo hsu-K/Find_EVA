@@ -18,7 +18,7 @@ bool GlobalState::removeThread(size_t index)
 	std::unique_lock<std::mutex> lock(threadPoolMutex);
 	if (index < threadPool.size()) {
 		// 先嘗試取消線程的 I/O 操作
-		HANDLE threadHandle = threadNativeHandles[index];
+		//HANDLE threadHandle = threadNativeHandles[index];
 
 		if (threadPool[index]->joinable()) {
 			/*threadPool[index]->join();*/
@@ -26,17 +26,17 @@ bool GlobalState::removeThread(size_t index)
 				threadPool[index]->join();
 				});
 
-			// 等待線程結束，但最多等待 3 秒
-			if (future.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) {
-				std::cerr << "警告: 線程 " << index << " 無法在超時時間內關閉" << std::endl;
-				// 強制終止線程 (不安全!)
-				DWORD exitCode = 0;
-				if (!TerminateThread(threadHandle, exitCode)) {
-					std::cerr << "強制終止線程失敗: " << GetLastError() << std::endl;
-				}
-				// 注意：這裡無法安全地 detach，可能會導致資源洩漏
-				// 但為了不阻塞程序，我們必須繼續
-			}
+			//// 等待線程結束，但最多等待 3 秒
+			//if (future.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) {
+			//	std::cerr << "警告: 線程 " << index << " 無法在超時時間內關閉" << std::endl;
+			//	// 強制終止線程 (不安全!)
+			//	DWORD exitCode = 0;
+			//	if (!TerminateThread(threadHandle, exitCode)) {
+			//		std::cerr << "強制終止線程失敗: " << GetLastError() << std::endl;
+			//	}
+			//	// 注意：這裡無法安全地 detach，可能會導致資源洩漏
+			//	// 但為了不阻塞程序，我們必須繼續
+			//}
 		}
 		threadPool.erase(threadPool.begin() + index);
 
