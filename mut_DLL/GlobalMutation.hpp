@@ -52,7 +52,9 @@ extern MutationNoCtx* mutGetMonitorInfoW;
 
 
 extern Mutation* mutMessageBoxW;
-
+extern Mutation* mutMessageBoxA;
+extern Mutation* mutMessageBoxExW;
+extern Mutation* mutMessageBoxExA;
 
 int AddMutationToCallListNoCtx(Mutation* src, MutationNoCtx** call);
 

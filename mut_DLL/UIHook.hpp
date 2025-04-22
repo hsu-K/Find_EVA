@@ -458,3 +458,203 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 	if (flag) (*flag) = FALSE;
 	return ret;
 }
+
+int WINAPI HookMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
+{
+	int ret;
+	BOOL* flag = NULL;
+	UINT64 Hash;
+
+	// 檢查是否需要記錄此調用
+	if (!SkipActivity(&Hash)) {
+		flag = EnterHook();
+
+		// 記錄調用資訊
+		ContextValue ctxVal;
+
+		// 先將 ANSI 字符轉換為寬字符，以便統一處理
+		// 記錄對話框標題
+		size_t capLen = strlen(lpCaption);
+		if (capLen >= MAX_CTX_LEN - 1) {
+			capLen = MAX_CTX_LEN - 10;  // 保留一些空間給文本內容
+		}
+
+		// 轉換標題從 ANSI 到寬字符
+		size_t convertedChars = 0;
+		mbstowcs_s(&convertedChars, ctxVal.szCtx, MAX_CTX_LEN, lpCaption, capLen);
+		ctxVal.szCtx[capLen] = L':';
+
+		// 追加對話框文本的前幾個字符
+		size_t textLen = strlen(lpText);
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // 扣除標題+冒號的長度
+		if (textLen > remainLen) {
+			textLen = remainLen;
+		}
+
+		// 轉換文本從 ANSI 到寬字符，並接在冒號後面
+		mbstowcs_s(&convertedChars, ctxVal.szCtx + capLen + 1,
+			MAX_CTX_LEN - capLen - 1, lpText, textLen);
+
+		// 確保字符串正確終止
+		ctxVal.szCtx[MAX_CTX_LEN - 1] = L'\0';
+
+		// 記錄調用
+		RecordCall(Call::cMessageBoxA, CTX_STR, &ctxVal, Hash);
+
+#ifdef __DEBUG_PRINT
+		printf("MessageBoxA detected: %s - %s\n", lpCaption, lpText);
+#endif
+		// 找到對應的Mutation
+		Mutation* mut = FindMutation(mutMessageBoxA, CTX_STR, &ctxVal);
+		if (mut != NULL) {
+			if (mut->mutType == MUT_ALT_NUM) {
+#ifdef __DEBUG_PRINT
+				printf("Applying MUT_ALT_NUM mutation to MessageBoxA.\n");
+#endif
+				if (flag) { (*flag) = FALSE; }
+				// 強制更改函數的回傳值
+				return (int)mut->mutValue.nValue;
+			}
+		}
+
+		// 執行原始函數
+		ret = OgMessageBoxA(hWnd, lpText, lpCaption, uType);
+		if (flag) (*flag) = FALSE;
+		return ret;
+	}
+
+	// 如果不需要hook則執行原始函數
+	ret = OgMessageBoxA(hWnd, lpText, lpCaption, uType);
+	if (flag) (*flag) = FALSE;
+	return ret;
+}
+
+int WINAPI HookMessageBoxExW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType, WORD wLanguageId)
+{
+	int ret;
+	BOOL* flag = NULL;
+	UINT64 Hash;
+
+	// 檢查是否需要記錄此調用
+	if (!SkipActivity(&Hash)) {
+		flag = EnterHook();
+
+		// 記錄調用資訊
+		ContextValue ctxVal;
+		// 記錄對話框標題
+		size_t capLen = wcslen(lpCaption);
+		if (capLen >= MAX_CTX_LEN - 1) {
+			capLen = MAX_CTX_LEN - 10;  // 保留一些空間給文本內容
+		}
+		wcsncpy(ctxVal.szCtx, lpCaption, capLen);
+		ctxVal.szCtx[capLen] = L':';
+
+		// 追加對話框文本的前幾個字符
+		size_t textLen = wcslen(lpText);
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // 扣除標題+冒號的長度
+		if (textLen > remainLen) {
+			textLen = remainLen;
+		}
+		wcsncpy(ctxVal.szCtx + capLen + 1, lpText, textLen);
+		ctxVal.szCtx[capLen + 1 + textLen] = L'\0';
+
+		// 記錄調用
+		RecordCall(Call::cMessageBoxExW, CTX_STR, &ctxVal, Hash);
+
+#ifdef __DEBUG_PRINT
+		printf("MessageBoxExW detected: %ws - %ws (language: %d)\n", lpCaption, lpText, wLanguageId);
+#endif
+		// 找到對應的Mutation
+		Mutation* mut = FindMutation(mutMessageBoxExW, CTX_STR, &ctxVal);
+		if (mut != NULL) {
+			if (mut->mutType == MUT_ALT_NUM) {
+#ifdef __DEBUG_PRINT
+				printf("Applying MUT_ALT_NUM mutation to MessageBoxExW.\n");
+#endif
+				if (flag) { (*flag) = FALSE; }
+				// 強制更改函數的回傳值
+				return (int)mut->mutValue.nValue;
+			}
+		}
+
+		// 執行原始函數
+		ret = OgMessageBoxExW(hWnd, lpText, lpCaption, uType, wLanguageId);
+		if (flag) (*flag) = FALSE;
+		return ret;
+	}
+
+	// 如果不需要hook則執行原始函數
+	ret = OgMessageBoxExW(hWnd, lpText, lpCaption, uType, wLanguageId);
+	if (flag) (*flag) = FALSE;
+	return ret;
+}
+
+int WINAPI HookMessageBoxExA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType, WORD wLanguageId)
+{
+	int ret;
+	BOOL* flag = NULL;
+	UINT64 Hash;
+
+	// 檢查是否需要記錄此調用
+	if (!SkipActivity(&Hash)) {
+		flag = EnterHook();
+
+		// 記錄調用資訊
+		ContextValue ctxVal;
+
+		// 先將 ANSI 字符轉換為寬字符，以便統一處理
+		// 記錄對話框標題
+		size_t capLen = strlen(lpCaption);
+		if (capLen >= MAX_CTX_LEN - 1) {
+			capLen = MAX_CTX_LEN - 10;  // 保留一些空間給文本內容
+		}
+
+		// 轉換標題從 ANSI 到寬字符
+		size_t convertedChars = 0;
+		mbstowcs_s(&convertedChars, ctxVal.szCtx, MAX_CTX_LEN, lpCaption, capLen);
+		ctxVal.szCtx[capLen] = L':';
+
+		// 追加對話框文本的前幾個字符
+		size_t textLen = strlen(lpText);
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // 扣除標題+冒號的長度
+		if (textLen > remainLen) {
+			textLen = remainLen;
+		}
+
+		// 轉換文本從 ANSI 到寬字符，並接在冒號後面
+		mbstowcs_s(&convertedChars, ctxVal.szCtx + capLen + 1,
+			MAX_CTX_LEN - capLen - 1, lpText, textLen);
+
+		// 確保字符串正確終止
+		ctxVal.szCtx[MAX_CTX_LEN - 1] = L'\0';
+
+		// 記錄調用
+		RecordCall(Call::cMessageBoxExA, CTX_STR, &ctxVal, Hash);
+
+#ifdef __DEBUG_PRINT
+		printf("MessageBoxExA detected: %s - %s (language: %d)\n", lpCaption, lpText, wLanguageId);
+#endif
+		// 找到對應的Mutation
+		Mutation* mut = FindMutation(mutMessageBoxExA, CTX_STR, &ctxVal);
+		if (mut != NULL) {
+			if (mut->mutType == MUT_ALT_NUM) {
+#ifdef __DEBUG_PRINT
+				printf("Applying MUT_ALT_NUM mutation to MessageBoxExA.\n");
+#endif
+				if (flag) { (*flag) = FALSE; }
+				// 強制更改函數的回傳值
+				return (int)mut->mutValue.nValue;
+			}
+		}
+
+		// 執行原始函數
+		ret = OgMessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId);
+		if (flag) (*flag) = FALSE;
+		return ret;
+	}
+
+	// 如果不需要hook則執行原始函數
+	ret = OgMessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId);
+	if (flag) (*flag) = FALSE;
+	return ret;
+}

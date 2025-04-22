@@ -314,6 +314,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			return false;
 		}
 		OgMessageBoxW = (ProtoMessageBoxW)GetProcAddress(u32, "MessageBoxW");
+		OgMessageBoxA = (ProtoMessageBoxA)GetProcAddress(u32, "MessageBoxA");
+		OgMessageBoxExW = (ProtoMessageBoxExW)GetProcAddress(u32, "MessageBoxExW");
+		OgMessageBoxExA = (ProtoMessageBoxExA)GetProcAddress(u32, "MessageBoxExA");
 
 		//DetourSetIgnoreTooSmall(TRUE);
 		// 掛載Detours的Hook
@@ -325,7 +328,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 		// 測試mesasgebox
 		DetourAttach(&(PVOID&)OgMessageBoxW, HookMessageBoxW);
-		//DetourAttach(&(PVOID&)oldMessageBox, MyMessageBox);
+		DetourAttach(&(PVOID&)OgMessageBoxA, HookMessageBoxA);
+		DetourAttach(&(PVOID&)OgMessageBoxExW, HookMessageBoxExW);
+		DetourAttach(&(PVOID&)OgMessageBoxExA, HookMessageBoxExA);
 
 		// evasive 掛上Detour勾子
 		DetourAttach(&(PVOID&)OgNtOpenKey, HookNtOpenKey);
@@ -553,8 +558,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
-		DetourAttach(&(PVOID&)OgMessageBoxW, HookMessageBoxW);
-		//DetourDetach(&(PVOID&)oldMessageBox, MyMessageBox);
+		DetourDetach(&(PVOID&)OgMessageBoxW, HookMessageBoxW);
+		DetourDetach(&(PVOID&)OgMessageBoxA, HookMessageBoxA);
+		DetourDetach(&(PVOID&)OgMessageBoxExW, HookMessageBoxExW);
+		DetourDetach(&(PVOID&)OgMessageBoxExA, HookMessageBoxExA);
 
 		DetourDetach(&(PVOID&)OgNtOpenKey, HookNtOpenKey);
 		DetourDetach(&(PVOID&)OgNtOpenKeyEx, HookNtOpenKeyEx);

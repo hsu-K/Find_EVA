@@ -142,6 +142,9 @@ typedef enum Calls {
 
 	CALL_BLOCK,		// 會卡住進程的function
 	cMessageBoxW,
+	cMessageBoxA,
+	cMessageBoxExW,
+	cMessageBoxExA,
 	CALL_END
 } Call;
 
@@ -165,4 +168,4 @@ static char DebugCallNames[(UINT)Calls::CALL_END][60] = { "NtOpenKey","NtOpenKey
 
 "CALL_BLOCK",
 
-"cMessageBoxW" };
+"MessageBoxW", "MessageBoxA", "MessageBoxExW", "MessageBoxExA"};

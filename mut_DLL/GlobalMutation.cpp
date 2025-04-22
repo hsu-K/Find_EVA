@@ -55,6 +55,9 @@ Mutation* mutLoadLibraryA = NULL;
 Mutation* mutNtQueryDirectoryObject = NULL;
 
 Mutation* mutMessageBoxW = NULL;
+Mutation* mutMessageBoxA = NULL;
+Mutation* mutMessageBoxExW = NULL;
+Mutation* mutMessageBoxExA = NULL;
 
 int AddMutationToCallListNoCtx(Mutation* src, MutationNoCtx** call)
 {
@@ -170,6 +173,9 @@ void StoreMutation(Mutation* gen)
 	case Call::cLoadLibraryW: AddMutationToCallList(gen, &mutLoadLibraryW); break;
 	case Call::cLoadLibraryA: AddMutationToCallList(gen, &mutLoadLibraryA); break;
 	case Call::cMessageBoxW: AddMutationToCallList(gen, &mutMessageBoxW); break;
+	case Call::cMessageBoxA: AddMutationToCallList(gen, &mutMessageBoxA); break;
+	case Call::cMessageBoxExW: AddMutationToCallList(gen, &mutMessageBoxExW); break;
+	case Call::cMessageBoxExA: AddMutationToCallList(gen, &mutMessageBoxExA); break;
 	default: fprintf(stderr, "Unknown mutation target\n"); break;
 	}
 }

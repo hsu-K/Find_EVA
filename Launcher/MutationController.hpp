@@ -136,8 +136,25 @@ public:
 
 				switch (entry->rec.call) {
 				case Call::cMessageBoxW:
-					printf("生成MessageBoxW的Hook\n");
 					// 檢查這個rec是否已經有變異，如果有就跳過，沒有就新增進List裡
+					if (MutationExists(&entry->rec)) break;
+					mutType = MUT_ALT_NUM;
+					mutVal.nValue = IDOK; // STATUS_OBJECT_NAME_NOT_FOUND
+					AddMutationToList(&entry->rec, &mutType, &mutVal);
+					return true;
+				case Call::cMessageBoxA:
+					if (MutationExists(&entry->rec)) break;
+					mutType = MUT_ALT_NUM;
+					mutVal.nValue = IDOK; // STATUS_OBJECT_NAME_NOT_FOUND
+					AddMutationToList(&entry->rec, &mutType, &mutVal);
+					return true;
+				case Call::cMessageBoxExW:
+					if (MutationExists(&entry->rec)) break;
+					mutType = MUT_ALT_NUM;
+					mutVal.nValue = IDOK; // STATUS_OBJECT_NAME_NOT_FOUND
+					AddMutationToList(&entry->rec, &mutType, &mutVal);
+					return true;
+				case Call::cMessageBoxExA:
 					if (MutationExists(&entry->rec)) break;
 					mutType = MUT_ALT_NUM;
 					mutVal.nValue = IDOK; // STATUS_OBJECT_NAME_NOT_FOUND
@@ -504,7 +521,6 @@ public:
 
 		return NULL;
 	}
-
 
 };
 

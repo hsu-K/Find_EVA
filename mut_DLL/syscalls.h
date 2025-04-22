@@ -39,6 +39,9 @@ NT_HOOK(FARPROC, WINAPI, GetProcAddress, HMODULE hModule, LPCSTR lpProcName);
 // 新增對MessageBox的Hook
 //NT_HOOK(int, WINAPI, MessageBox, HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
 NT_HOOK(int, WINAPI, MessageBoxW, HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType);
+NT_HOOK(int, WINAPI, MessageBoxA, HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType);
+NT_HOOK(int, WINAPI, MessageBoxExW, HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType, WORD wLanguageId);
+NT_HOOK(int, WINAPI, MessageBoxExA, HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType, WORD wLanguageId);
 
 // ~~~~~~### Environment Calls ###~~~~~~
 // NtOpenKey
