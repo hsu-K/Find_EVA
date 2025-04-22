@@ -16,7 +16,7 @@ public:
 		: firstExec(nullptr), currExec(nullptr), mutHead(nullptr), mutCurr(nullptr), dwMutationCount(0), skip(nullptr), act(0) { }
 
 	~Frame() {
-#ifdef __DEBUG
+#ifdef __DEBUG_PRINT
 		std::cout << "Frame is destructed" << std::endl;
 #endif
 	}

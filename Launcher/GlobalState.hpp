@@ -14,7 +14,7 @@ private:
 	GlobalState& operator = (const GlobalState&) = delete;
 public:
 	~GlobalState() {
-#ifdef __DEBUG
+#ifdef __DEBUG_PRINT
 		std::cout << "GlobalState is destructed" << std::endl;
 #endif
 

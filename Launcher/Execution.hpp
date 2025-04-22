@@ -80,7 +80,7 @@ public:
 			this->recordings[i].recCurr = nullptr;	// 設定當前記錄為空
 		}
 
-#ifdef __DEBUG
+#ifdef __DEBUG_PRINT
 		std::cout << "Execution is destructed" << std::endl;
 #endif
 	}

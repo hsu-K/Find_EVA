@@ -103,7 +103,7 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 		return NULL;
 	}
 	printf("---------------------------------------------\n");
-	printf("正在判斷Mutation: %d", start->rec.call);
+	printf("Finding Mutation: %s...", DebugCallNames[start->rec.call]);
 
 	if (ctxType == CTX_NUM) {
 		while (loop != NULL) {
@@ -144,10 +144,10 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 		}
 	}
 	if (loop != NULL) {
-		printf(" / 找到Mutation\n");
+		printf(" / Find the Mutation\n");
 	}
 	else {
-		printf(" / 沒找到Mutation\n");
+		printf(" / Not fimd the Mutation\n");
 	}
 	printf("---------------------------------------------\n");
 

@@ -186,10 +186,10 @@ public:
 		while (WaitForSingleObject(pi.hProcess, 1000) == WAIT_TIMEOUT) { // 每秒檢查一次
 			double cpuUsage = Launcher_MiscUtil::CalculateCPUUsage(pi.hProcess, prevSysTime, prevProcKernelTime, prevProcUserTime);
 			if (cpuUsage == 0) {
-				printf("程式被卡住了，CUP 使用率為0\n");
+				printf("[Enviral Launcher] Target is Blocking, CUP Usage is 0\n");
 				suspend_time++;
 				if (suspend_time * 1000 >= LAUNCH_TIME_LIMIT) {
-					printf("目標進程超時，超過預設時間: %d\n", LAUNCH_TIME_LIMIT);
+					printf("[Enviral Launcher] Target Suspen Out Of Time, LAUNCH_TIME_LIMIT: %d\n", LAUNCH_TIME_LIMIT);
 					if (time_out) {
 						*time_out = true; // 更新 time_out 的值
 					}
@@ -198,7 +198,9 @@ public:
 			}
 			else if (cpuUsage > 0) {
 				suspend_time = 0;
+#ifdef __DEBUG_PRINT
 				std::cout << "CPU Usage: " << cpuUsage << "%" << std::endl;
+#endif
 			}
 			else {
 				std::cerr << "Failed to calculate CPU usage." << std::endl;
@@ -207,7 +209,7 @@ public:
 
 
 
-		printf("目標進程結束\n");
+		printf("[Enviral Launcher] Tager End...\n");
 		// cease responder threads
 		// 設置線程同步資料
 		SetEvent(syncEventHandle);
@@ -228,7 +230,6 @@ public:
 			}
 		}
 
-		std::cout << "結束進程同步" << std::endl;
 		// 移除所有線程
 		for (int i = static_cast<int>(threadCount) - 1; i >= 0; i--) {
 			try {
@@ -262,7 +263,6 @@ public:
 	}
 
 	static int RunExploration(char* path, Execution* baseExec, ULONG* cycle, ULONG* volapplied) {
-		std::cout << baseExec << std::endl;
 		BOOL getMut = FALSE;
 		LONG recindex = 0;
 		RecordList* vol = nullptr;
@@ -291,9 +291,7 @@ public:
 			executions.push_back(newExec);
 			frameCurr->currExec = newExec.get();
 			
-#ifdef __DEBUG
-			printf("Launching target.\n");
-#endif
+			printf("[Enviral Launcher] Launching target.\n");
 
 			// Run next execution
 			bool time_out = false;

@@ -22,7 +22,7 @@ void ThreadManager::stopListenerThread()
 // 監聽線程
 DWORD WINAPI ThreadManager::ListenerThreadEntry()
 {
-	printf("[Enviral Launcher] Listener thread is active.\n");
+	//printf("[Enviral Launcher] Listener thread is active.\n");
 	HANDLE InstancePipe = nullptr;
 	DWORD dwThreadId = 0;
 	while (!stopListener) {
@@ -71,7 +71,7 @@ DWORD WINAPI ThreadManager::ListenerThreadEntry()
 				break;
 			}
 		}
-#ifdef _DEBUG
+#ifdef __DEBUG_PRINT
 		printf("[LISTENER] New client connection obtained!\n");
 #endif
 		// 判斷是否超過最大可用的回應線程(20)
@@ -88,7 +88,9 @@ DWORD WINAPI ThreadManager::ListenerThreadEntry()
 			GlobalState::GetInst()->addThread(responderThread);
 
 			// 記錄線程已創建的信息
-			std::cout << "Created responder thread and added to thread pool." << std::endl;
+#ifdef __DEBUG_PRINT
+            std::cout << "Created responder thread and added to thread pool." << std::endl;
+#endif 
 		}
 		catch (const std::exception& e) {
 			fprintf(stderr, "Could not create responder thread: %s\n", e.what());
@@ -123,7 +125,7 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
         OVERLAPPED ol = {};
         ol.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
         if (!ol.hEvent) {
-            std::cerr << "無法創建事件句柄: " << GetLastError() << std::endl;
+            std::cerr << "[RESPONDER] Cannot create EventHandle" << GetLastError() << std::endl;
             break;
         }
 
@@ -137,7 +139,7 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
         if (readSuccess) {
             // 讀取立即完成，無需等待
             if (!GetOverlappedResult(hPipe, &ol, &dwRead, FALSE)) {
-                std::cerr << "GetOverlappedResult 立即模式失敗: " << GetLastError() << std::endl;
+                std::cerr << "[RESPONDER] GetOverlappedResult Fail: " << GetLastError() << std::endl;
                 CloseHandle(ol.hEvent);
                 break;
             }
@@ -147,16 +149,20 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
             DWORD lastError = GetLastError();
             if (lastError != ERROR_IO_PENDING) {
                 if (lastError == ERROR_BROKEN_PIPE) {
-                    std::cout << "管道已關閉" << std::endl;
+#ifdef __DEBUG_PRINT
+                    std::cout << "[RESPONDER] Pipe already closed" << std::endl;
+#endif
                 }
                 else if (lastError == ERROR_NO_DATA) {
-                    std::cout << "管道中無數據，等待 50ms 後重試" << std::endl;
+#ifdef __DEBUG_PRINT
+                    std::cout << "[RESPONDER] No data in pipe, wait for 5 sec" << std::endl;
+#endif
                     CloseHandle(ol.hEvent);
-                    Sleep(50);
+                    Sleep(5);
                     continue;
                 }
                 else {
-                    std::cerr << "ReadFile 失敗，錯誤碼: " << lastError << std::endl;
+                    std::cerr << "[RESPONDER] ReadFile Error: " << lastError << std::endl;
                     CloseHandle(ol.hEvent);
                     break;
                 }
@@ -171,10 +177,12 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
                 if (!GetOverlappedResult(hPipe, &ol, &dwRead, FALSE)) {
                     DWORD error = GetLastError();
                     if (error == ERROR_BROKEN_PIPE) {
-                        std::cout << "管道已關閉" << std::endl;
+#ifdef __DEBUG_PRINT
+                        std::cout << "[RESPONDER] Pipe already closed" << std::endl;
+#endif
                     }
                     else {
-                        std::cerr << "GetOverlappedResult 失敗: " << error << std::endl;
+                        std::cerr << "[RESPONDER] GetOverlappedResult Fail: " << error << std::endl;
                     }
                     CloseHandle(ol.hEvent);
                     break;
@@ -188,7 +196,7 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
             }
             else {
                 // 等待失敗
-                std::cerr << "WaitForSingleObject 失敗: " << GetLastError() << std::endl;
+                std::cerr << "[RESPONDER] WaitForSingleObject Fail: " << GetLastError() << std::endl;
                 CloseHandle(ol.hEvent);
                 break;
             }
