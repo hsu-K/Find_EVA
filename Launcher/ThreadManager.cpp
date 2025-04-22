@@ -104,7 +104,7 @@ DWORD WINAPI ThreadManager::ListenerThreadEntry()
 DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 {
 
-    std::cout << "ResponderThreadEntry創建成功" << std::endl;
+    //std::cout << "ResponderThreadEntry創建成功" << std::endl;
     DWORD tid = GetCurrentThreadId();
 
     // 安全地增加並獲取一個索引值
@@ -112,10 +112,6 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 
     // 將 frameCurr 的每個突變資料傳送到管道
     PipeManager::TransferMutations(hPipe);
-
-    // 設置管道為非同步模式，這一步可能不需要，因為您已經在創建管道時使用了 FILE_FLAG_OVERLAPPED
-    // DWORD pipeMode = PIPE_READMODE_MESSAGE;
-    // SetNamedPipeHandleState(hPipe, &pipeMode, NULL, NULL);
 
     // 檢查 SyncEvent 是否已設置
     while (WaitForSingleObject(*(GlobalState::GetInst()->get_SyncEvent().get()), 0) != WAIT_OBJECT_0) {
@@ -200,7 +196,7 @@ DWORD WINAPI ThreadManager::ResponderThreadEntry(HANDLE hPipe)
 
         // 檢查是否真正讀取到數據
         if (dwRead == sizeof(rec)) {
-            std::cout << DebugCallNames[rec.call] << std::endl;
+            //std::cout << DebugCallNames[rec.call] << std::endl;
 
             // 將讀取到的 Recording 加入到 frameCurr 的 currExec 的本地記錄中
             std::shared_ptr<Frame> frameCurr = GlobalState::GetInst()->get_frameCurr();
