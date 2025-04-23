@@ -13,13 +13,14 @@ NTSTATUS NTAPI HookNtQuerySystemInformation(SYSTEM_INFORMATION_CLASS SystemInfor
 	BOOL* flag = NULL;
 	//printf("Hook NtQuerySystemInformation: %d\n", SystemInformationClass);
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		ctxVal.dwCtx = (DWORD)SystemInformationClass;
-		RecordCall(Call::cNtQuerySystemInformation, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cNtQuerySystemInformation, CTX_NUM, &ctxVal, Hash, RetAddr);
 
-		Mutation* mut = FindMutation(mutNtQuerySystemInformation, CTX_NUM, &ctxVal); // ctx matches the class
+		Mutation* mut = FindMutation(mutNtQuerySystemInformation, CTX_NUM, &ctxVal, Hash); // ctx matches the class
 		if (mut != NULL) {
 			if (mut->mutType == MUT_FAIL) {
 				// STATUS_INFO_LENGTH_MISMATCH...?
@@ -111,10 +112,11 @@ NTSTATUS NTAPI HookNtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInf
 	// Mutation types: (context dependent) MUT_ALT_NUM, MUT_FAIL, MUT_ALT_STR
 	// BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ContextValue ctxVal;
 		ctxVal.dwCtx = (DWORD)SystemInformationClass;
-		RecordCall(Call::cNtQuerySystemInformationEx, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cNtQuerySystemInformationEx, CTX_NUM, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtQuerySystemInformationEx(SystemInformationClass, InputBuffer, InputBufferLength, SystemInformation, SystemInformationLength, ReturnLength);
 	return ret;
@@ -128,9 +130,10 @@ NTSTATUS NTAPI HookNtPowerInformation(POWER_INFORMATION_LEVEL InformationLevel, 
 	BOOL* flag = NULL;
 	if (InformationLevel == SystemPowerCapabilities) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-			RecordCall(Call::cNtPowerInformation, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cNtPowerInformation, CTX_NONE, NULL, Hash, RetAddr);
 			// no findmutation since no context to match
 			if (mutNtPowerInformation != NULL) {
 				// there is a mutation
@@ -168,10 +171,11 @@ ULONG WINAPI HookGetAdaptersAddresses(ULONG Family, ULONG Flags, PVOID Reserved,
 
 	if (ret == ERROR_SUCCESS) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 
-			RecordCall(Call::cGetAdaptersAddresses, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cGetAdaptersAddresses, CTX_NONE, NULL, Hash, RetAddr);
 
 			if (mutGetAdaptersAddresses != NULL) { // there is a mutation
 #ifdef __DEBUG_PRINT
@@ -211,9 +215,10 @@ ULONG WINAPI HookGetAdaptersInfo(PIP_ADAPTER_INFO AdapterInfo, PULONG SizePointe
 
 	if (ret == ERROR_SUCCESS) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-			RecordCall(Call::cGetAdaptersInfo, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cGetAdaptersInfo, CTX_NONE, NULL, Hash, RetAddr);
 			if (mutGetAdaptersInfo != NULL) {
 #ifdef __DEBUG_PRINT
 				printf("Applying GetAdapterInfo mutation.\n");
@@ -248,12 +253,13 @@ BOOL WINAPI HookSetupDiGetDeviceRegistryPropertyW(HDEVINFO DeviceInfoSet, PSP_DE
 	BOOL* flag = NULL;
 	if (Property == SPDRP_HARDWAREID) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ret = OgSetupDiGetDeviceRegistryPropertyW(DeviceInfoSet, DeviceInfoData, Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize, RequiredSize);
 			if (ret) {
 				if (wcsstr((wchar_t*)PropertyBuffer, L"VBOX") != NULL) { // VBOX
-					RecordCall(Call::cSetupDiGetDeviceRegistryPropertyW, CTX_NONE, NULL, Hash);
+					RecordCall(Call::cSetupDiGetDeviceRegistryPropertyW, CTX_NONE, NULL, Hash, RetAddr);
 					if (mutSetupDiGetDeviceRegistryPropertyW != NULL) {
 #ifdef __DEBUG_PRINT
 						printf("Applying SetupDiGetDeviceRegistryPropertyW mutation!\n");
@@ -296,12 +302,13 @@ BOOL WINAPI HookSetupDiGetDeviceRegistryPropertyA(HDEVINFO DeviceInfoSet, PSP_DE
 	BOOL* flag = NULL;
 	if (Property == SPDRP_HARDWAREID) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ret = OgSetupDiGetDeviceRegistryPropertyA(DeviceInfoSet, DeviceInfoData, Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize, RequiredSize);
 			if (ret) {
 				if (strstr((char*)PropertyBuffer, "VBOX") != NULL) { // VBOX
-					RecordCall(Call::cSetupDiGetDeviceRegistryPropertyA, CTX_NONE, NULL, Hash);
+					RecordCall(Call::cSetupDiGetDeviceRegistryPropertyA, CTX_NONE, NULL, Hash, RetAddr);
 					if (mutSetupDiGetDeviceRegistryPropertyA != NULL) {
 #ifdef __DEBUG_PRINT
 						printf("Applying SetupDiGetDeviceRegistryPropertyA mutation!\n");
@@ -339,9 +346,10 @@ BOOL WINAPI HookEnumServicesStatusExA(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLev
 	BOOL* flag = NULL;
 	if (InfoLevel == SC_ENUM_PROCESS_INFO && dwServiceType == SERVICE_DRIVER) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-			RecordCall(Call::cEnumServicesStatusExA, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cEnumServicesStatusExA, CTX_NONE, NULL, Hash, RetAddr);
 
 			if (mutEnumServicesStatusExA != NULL) {
 				if (mutEnumServicesStatusExA->mutType == MUT_HIDE) {
@@ -376,9 +384,10 @@ BOOL WINAPI HookEnumServicesStatusExW(SC_HANDLE hSCManager, SC_ENUM_TYPE InfoLev
 	BOOL* flag = NULL;
 	if (InfoLevel == SC_ENUM_PROCESS_INFO && dwServiceType == SERVICE_DRIVER) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-			RecordCall(Call::cEnumServicesStatusExW, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cEnumServicesStatusExW, CTX_NONE, NULL, Hash, RetAddr);
 
 			if (mutEnumServicesStatusExW != NULL) {
 				if (mutEnumServicesStatusExW->mutType == MUT_HIDE) {
@@ -412,9 +421,10 @@ void WINAPI HookGetSystemTime(LPSYSTEMTIME lpSystemTime)
 	// todo: possibly mutate the time
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cGetSystemTime, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cGetSystemTime, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	OgGetSystemTime(lpSystemTime);
 	if (flag) (*flag) = FALSE;
@@ -425,9 +435,10 @@ void WINAPI HookGetLocalTime(LPSYSTEMTIME lpSystemTime)
 	// todo: possibly mutate the time 
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cGetLocalTime, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cGetLocalTime, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	OgGetLocalTime(lpSystemTime);
 	if (flag) (*flag) = FALSE;
@@ -437,8 +448,9 @@ DWORD WINAPI HookGetTickCount()
 {
 	DWORD ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cGetTickCount, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cGetTickCount, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	// adjust for sleep skipping
 	ret = OgGetTickCount() + TimeShift;
@@ -452,14 +464,15 @@ NTSTATUS NTAPI HookNtDelayExecution(BOOLEAN Alertable, PLARGE_INTEGER DelayInter
 	// Negative value means delay relative to current
 	// :10000 = milliseconds
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		if (DelayInterval->QuadPart < 0) {
 			ContextValue ctxVal;
 			ctxVal.dwCtx = (DWORD)(DelayInterval->QuadPart / -10000);
-			RecordCall(Call::cNtDelayExecution, CTX_NUM, &ctxVal, Hash);
+			RecordCall(Call::cNtDelayExecution, CTX_NUM, &ctxVal, Hash, RetAddr);
 		}
 		else {
-			RecordCall(Call::cNtDelayExecution, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cNtDelayExecution, CTX_NONE, NULL, Hash, RetAddr);
 		}
 	}
 	if (DelayInterval->QuadPart < 0) {
@@ -481,8 +494,9 @@ BOOL WINAPI HookQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
 {
 	BOOL ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cQueryPerformanceCounter, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cQueryPerformanceCounter, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	// NOTE: malware can detect this behavior by executing rdtsc instruction
 	ret = OgQueryPerformanceCounter(lpPerformanceCount);
@@ -501,8 +515,9 @@ NTSTATUS NTAPI HookNtQuerySystemTime(PLARGE_INTEGER SystemTime)
 	// SIMPLE_LOG(NTSTATUS, NtQuerySystemTime, SystemTime)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtQuerySystemTime, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtQuerySystemTime, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtQuerySystemTime(SystemTime);
 	return ret;
@@ -515,9 +530,10 @@ BOOL WINAPI HookGetLastInputInfo(PLASTINPUTINFO plii)
 	BOOL* flag = NULL;
 	if (plii != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-			RecordCall(Call::cGetLastInputInfo, CTX_NONE, NULL, Hash);
+			RecordCall(Call::cGetLastInputInfo, CTX_NONE, NULL, Hash, RetAddr);
 			if (mutGetLastInputInfo != NULL) {
 				if (mutGetLastInputInfo->mutType == MUT_SUCCEED) {
 #ifdef __DEBUG_PRINT

@@ -24,7 +24,8 @@ NTSTATUS NTAPI HookNtCreateMutant(PHANDLE MutantHandle, ACCESS_MASK DesiredAcces
 	// Unnamed mutexes are not of relevance for evasive behavior
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ret = OgNtCreateMutant(MutantHandle, DesiredAccess, ObjectAttributes, InitialOwner);
 			if (NT_SUCCESS(ret)) {
@@ -38,9 +39,9 @@ NTSTATUS NTAPI HookNtCreateMutant(PHANDLE MutantHandle, ACCESS_MASK DesiredAcces
 					wcsncpy(ctxVal.szCtx, ObjectAttributes->ObjectName->Buffer, widec);
 					ctxVal.szCtx[widec] = L'\0';
 
-					RecordCall(Call::cNtCreateMutant, CTX_STR, &ctxVal, Hash);
+					RecordCall(Call::cNtCreateMutant, CTX_STR, &ctxVal, Hash, RetAddr);
 
-					Mutation* mut = FindMutation(mutNtCreateMutant, CTX_STR, &ctxVal);
+					Mutation* mut = FindMutation(mutNtCreateMutant, CTX_STR, &ctxVal, Hash);
 					if (mut != NULL) {
 #ifdef __DEBUG_PRINT
 						printf("Applying NtCreateMutant mutation!\n");
@@ -72,7 +73,8 @@ NTSTATUS NTAPI HookNtOpenMutant(PHANDLE MutantHandle, ACCESS_MASK DesiredAccess,
 	// if the open
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = ObjectAttributes->ObjectName->Length / sizeof(wchar_t);
@@ -82,9 +84,9 @@ NTSTATUS NTAPI HookNtOpenMutant(PHANDLE MutantHandle, ACCESS_MASK DesiredAccess,
 			wcsncpy(ctxVal.szCtx, ObjectAttributes->ObjectName->Buffer, widec);
 			ctxVal.szCtx[widec] = L'\0';
 
-			RecordCall(Call::cNtOpenMutant, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cNtOpenMutant, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutNtOpenMutant, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutNtOpenMutant, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 #ifdef __DEBUG_PRINT
 				printf("Applying NtOpenMutant mutation!\n");
@@ -108,8 +110,9 @@ NTSTATUS NTAPI HookNtOpenEvent(PHANDLE EventHandle, ACCESS_MASK DesiredAccess, P
 	// SIMPLE_LOG(NTSTATUS, NtOpenEvent, EventHandle, DesiredAccess, ObjectAttributes)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtOpenEvent, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtOpenEvent, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtOpenEvent(EventHandle, DesiredAccess, ObjectAttributes);
 	return ret;
@@ -120,8 +123,9 @@ NTSTATUS NTAPI HookNtOpenTimer(PHANDLE TimerHandle, ACCESS_MASK DesiredAccess, P
 	// SIMPLE_LOG(NTSTATUS, NtOpenTimer, TimerHandle, DesiredAccess, ObjectAttributes)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtOpenTimer, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtOpenTimer, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtOpenTimer(TimerHandle, DesiredAccess, ObjectAttributes);
 	return ret;
@@ -132,8 +136,9 @@ NTSTATUS NTAPI HookNtQueryTimer(HANDLE TimerHandle, TIMER_INFORMATION_CLASS Time
 	// SIMPLE_LOG(NTSTATUS, NtQueryTimer, TimerHandle, TimerInformationClass, TimerInformation, TimerInformationLength, ReturnLength)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtQueryTimer, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtQueryTimer, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtQueryTimer(TimerHandle, TimerInformationClass, TimerInformation, TimerInformationLength, ReturnLength);
 	return ret;
@@ -144,8 +149,9 @@ NTSTATUS NTAPI HookNtCreateTimer(PHANDLE TimerHandle, ACCESS_MASK DesiredAccess,
 	// SIMPLE_LOG(NTSTATUS, NtCreateTimer, TimerHandle, DesiredAccess, ObjectAttributes, TimerType)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateTimer, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateTimer, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateTimer(TimerHandle, DesiredAccess, ObjectAttributes, TimerType);
 	return ret;
@@ -156,8 +162,9 @@ NTSTATUS NTAPI HookNtOpenSemaphore(PHANDLE SemaphoreHandle, ACCESS_MASK DesiredA
 	// SIMPLE_LOG(NTSTATUS, NtOpenSemaphore, SemaphoreHandle, DesiredAccess, ObjectAttributes)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtOpenSemaphore, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtOpenSemaphore, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtOpenSemaphore(SemaphoreHandle, DesiredAccess, ObjectAttributes);
 	return ret;
@@ -168,8 +175,9 @@ NTSTATUS NTAPI HookNtCreateSemaphore(PHANDLE SemaphoreHandle, ACCESS_MASK Desire
 	// SIMPLE_LOG(NTSTATUS, NtCreateSemaphore, SemaphoreHandle, DesiredAccess, ObjectAttributes, InitialCount, MaximumCount)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateSemaphore, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateSemaphore, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateSemaphore(SemaphoreHandle, DesiredAccess, ObjectAttributes, InitialCount, MaximumCount);
 	return ret;

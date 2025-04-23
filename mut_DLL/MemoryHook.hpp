@@ -12,8 +12,9 @@ NTSTATUS NTAPI HookNtMapViewOfSection(HANDLE SectionHandle, HANDLE ProcessHandle
 	// SIMPLE_LOG(NTSTATUS, NtMapViewOfSection, SectionHandle, ProcessHandle, BaseAddress, ZeroBits, CommitSize, SectionOffset, ViewSize, InheritDisposition, AllocationType, Protect)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtMapViewOfSection, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtMapViewOfSection, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtMapViewOfSection(SectionHandle, ProcessHandle, BaseAddress, ZeroBits, CommitSize, SectionOffset, ViewSize, InheritDisposition, AllocationType, Protect);
 	return ret;
@@ -24,8 +25,9 @@ NTSTATUS NTAPI HookNtUnmapViewOfSection(HANDLE ProcessHandle, PVOID BaseAddress)
 	// SIMPLE_LOG(NTSTATUS, NtUnmapViewOfSection, ProcessHandle, BaseAddress)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtUnmapViewOfSection, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtUnmapViewOfSection, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtUnmapViewOfSection(ProcessHandle, BaseAddress);
 	return ret;
@@ -36,8 +38,9 @@ NTSTATUS NTAPI HookNtWriteVirtualMemory(HANDLE ProcessHandle, PVOID BaseAddress,
 	// SIMPLE_LOG(NTSTATUS, NtWriteVirtualMemory, ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtWriteVirtualMemory, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtWriteVirtualMemory, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtWriteVirtualMemory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
 	return ret;
@@ -48,8 +51,9 @@ NTSTATUS NTAPI HookNtMakeTemporaryObject(HANDLE ObjectHandle)
 	// SIMPLE_LOG(NTSTATUS, NtMakeTemporaryObject, ObjectHandle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtMakeTemporaryObject, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtMakeTemporaryObject, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtMakeTemporaryObject(ObjectHandle);
 	return ret;
@@ -60,8 +64,9 @@ NTSTATUS NTAPI HookNtMakePermanentObject(HANDLE Handle)
 	// SIMPLE_LOG(NTSTATUS, NtMakePermanentObject, Handle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtMakePermanentObject, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtMakePermanentObject, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtMakePermanentObject(Handle);
 	return ret;
@@ -72,9 +77,10 @@ HRESULT WINAPI HookCoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD 
 	HRESULT ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cCoCreateInstance, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cCoCreateInstance, CTX_NONE, NULL, Hash, RetAddr);
 		if (mutCoCreateInstance != NULL) {
 			if (mutCoCreateInstance->mutType == MUT_FAIL) {
 				if (flag) (*flag) = FALSE;

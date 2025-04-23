@@ -18,14 +18,15 @@ NTSTATUS NTAPI HookNtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCL
 	BOOL* flag = NULL;
 	//if (ProcessInformationClass == ProcessBasicInformation) {
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
 		ContextValue ctxVal;
 		ctxVal.dwCtx = (DWORD)ProcessInformationClass;
-		RecordCall(Call::cNtQueryInformationProcess, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cNtQueryInformationProcess, CTX_NUM, &ctxVal, Hash, RetAddr);
 
-		Mutation* mut = FindMutation(mutNtQueryInformationProcess, CTX_NUM, &ctxVal); // ctx matches the class
+		Mutation* mut = FindMutation(mutNtQueryInformationProcess, CTX_NUM, &ctxVal, Hash); // ctx matches the class
 		if (mut != NULL) {
 			// there is a mutation
 			if (mut->mutType == MUT_HIDE) { // ctx only ProcessBasicInformation
@@ -81,9 +82,10 @@ BOOL WINAPI HookProcess32FirstW(HANDLE hSnapshot, LPPROCESSENTRY32W lppe)
 	// Mutation types: MUT_HIDE (contain "vbox")
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cProcess32FirstW, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cProcess32FirstW, CTX_NONE, NULL, Hash, RetAddr);
 		if (mutProcess32FirstW != NULL) {
 			if (mutProcess32FirstW->mutType == MUT_HIDE) {
 				ret = OgProcess32FirstW(hSnapshot, lppe);
@@ -109,9 +111,10 @@ BOOL WINAPI HookProcess32NextW(HANDLE hSnapshot, LPPROCESSENTRY32W lppe)
 	// Mutation types: MUT_FAIL, MUT_HIDE (contain "vbox")
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cProcess32NextW, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cProcess32NextW, CTX_NONE, NULL, Hash, RetAddr);
 		if (mutProcess32NextW != NULL) {
 			if (mutProcess32NextW->mutType == MUT_HIDE) {
 				ret = OgProcess32NextW(hSnapshot, lppe);
@@ -141,8 +144,9 @@ NTSTATUS NTAPI HookNtSetInformationProcess(HANDLE ProcessHandle, PROCESS_INFORMA
 	// SIMPLE_LOG(NTSTATUS, NtSetInformationProcess, ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtSetInformationProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtSetInformationProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtSetInformationProcess(ProcessHandle, ProcessInformationClass, ProcessInformation, ProcessInformationLength);
 	return ret;
@@ -153,8 +157,9 @@ NTSTATUS NTAPI HookNtGetNextProcess(HANDLE ProcessHandle, ACCESS_MASK DesiredAcc
 	// SIMPLE_LOG(NTSTATUS, NtGetNextProcess, ProcessHandle, DesiredAccess, HandleAttributes, Flags, NewProcessHandle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtGetNextProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtGetNextProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtGetNextProcess(ProcessHandle, DesiredAccess, HandleAttributes, Flags, NewProcessHandle);
 	return ret;
@@ -169,8 +174,9 @@ NTSTATUS NTAPI HookNtCreateUserProcess(PHANDLE ProcessHandle, PHANDLE ThreadHand
 	// unfortunately, the process flags are not passed to NtCreateUserProcess, so we cannot inject the DLL from here
 	// we can still use it to track process creation activity however
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateUserProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateUserProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateUserProcess(ProcessHandle, ThreadHandle, ProcessDesiredAccess, ThreadDesiredAccess, ProcessObjectAttributes, ThreadObjectAttributes, ProcessFlags, ThreadFlags, ProcessParameters, CreateInfo, AttributeList);
 	return ret;
@@ -181,8 +187,9 @@ NTSTATUS NTAPI HookNtCreateProcess(PHANDLE ProcessHandle, ACCESS_MASK DesiredAcc
 	// SIMPLE_LOG(NTSTATUS, NtCreateProcess, ProcessHandle, DesiredAccess, ObjectAttributes, ParentProcess, InheritObjectTable, SectionHandle, DebugPort, ExceptionPort)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateProcess(ProcessHandle, DesiredAccess, ObjectAttributes, ParentProcess, InheritObjectTable, SectionHandle, DebugPort, ExceptionPort);
 	return ret;
@@ -193,8 +200,9 @@ NTSTATUS NTAPI HookNtCreateProcessEx(PHANDLE ProcessHandle, ACCESS_MASK DesiredA
 	// SIMPLE_LOG(NTSTATUS, NtCreateProcessEx, ProcessHandle, DesiredAccess, ObjectAttributes, ParentProcess, Flags, SectionHandle, DebugPort, ExceptionPort, JobMemberLevel)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateProcessEx, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateProcessEx, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateProcessEx(ProcessHandle, DesiredAccess, ObjectAttributes, ParentProcess, Flags, SectionHandle, DebugPort, ExceptionPort, JobMemberLevel);
 	return ret;
@@ -205,8 +213,9 @@ NTSTATUS NTAPI HookNtSuspendProcess(HANDLE ProcessHandle)
 	// SIMPLE_LOG(NTSTATUS, NtSuspendProcess, ProcessHandle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtSuspendProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtSuspendProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtSuspendProcess(ProcessHandle);
 	return ret;
@@ -219,8 +228,9 @@ NTSTATUS NTAPI HookNtTerminateProcess(HANDLE ProcessHandle, NTSTATUS ExitStatus)
 	// processhandle == NULL -> current process exits
 	// printf("NtTerminateProcess -- Handle:%p Exit:%x\n", ProcessHandle, ExitStatus);
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtTerminateProcess, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtTerminateProcess, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtTerminateProcess(ProcessHandle, ExitStatus);
 	return ret;
@@ -233,7 +243,8 @@ BOOL WINAPI HookCreateProcessInternalW(HANDLE hUserToken, LPCWSTR lpApplicationN
 	printf("Hook::: CreateProcessInternalW: %x\n", dwCreationFlags);
 #endif
 	UINT64 Hash;
-	SkipActivity(&Hash);
+	UINT64 RetAddr = 0;
+	SkipActivity(&Hash, &RetAddr);
 
 	dwCreationFlags |= CREATE_SUSPENDED;
 	ret = OgCreateProcessInternalW(hUserToken, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation, hNewToken);
@@ -244,7 +255,7 @@ BOOL WINAPI HookCreateProcessInternalW(HANDLE hUserToken, LPCWSTR lpApplicationN
 
 		ContextValue ctxVal;
 		ctxVal.dwCtx = (DWORD)(lpProcessInformation->dwProcessId);
-		RecordCall(Call::cCreateProcessInternalW, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cCreateProcessInternalW, CTX_NUM, &ctxVal, Hash, RetAddr);
 
 		size_t lendll = sizeof(TARGET_DLL); //strlen(TARGET_DLL);
 		LPVOID dllname = VirtualAllocEx(lpProcessInformation->hProcess, NULL, lendll, MEM_COMMIT, PAGE_READWRITE);
@@ -275,7 +286,8 @@ HMODULE WINAPI HookGetModuleHandleW(LPCWSTR lpModuleName)
 	BOOL* flag = NULL;
 	if (lpModuleName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpModuleName);
@@ -284,7 +296,7 @@ HMODULE WINAPI HookGetModuleHandleW(LPCWSTR lpModuleName)
 			}
 			wcsncpy(ctxVal.szCtx, lpModuleName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cGetModuleHandleW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cGetModuleHandleW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			/*
 			Mutation* mut = FindMutation(mutGetModuleHandleW, CTX_STR, &ctxVal);
@@ -311,7 +323,8 @@ HMODULE WINAPI HookGetModuleHandleA(LPCSTR lpModuleName)
 	BOOL* flag = NULL;
 	if (lpModuleName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 
@@ -321,7 +334,7 @@ HMODULE WINAPI HookGetModuleHandleA(LPCSTR lpModuleName)
 			}
 			mbstowcs(ctxVal.szCtx, lpModuleName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cGetModuleHandleA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cGetModuleHandleA, CTX_STR, &ctxVal, Hash, RetAddr);
 			/*
 			Mutation* mut = FindMutation(mutGetModuleHandleA, CTX_STR, &ctxVal);
 			if (mut != NULL) {
@@ -347,7 +360,8 @@ BOOL WINAPI HookGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE*
 	BOOL* flag = NULL;
 	if (lpModuleName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpModuleName);
@@ -356,7 +370,7 @@ BOOL WINAPI HookGetModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE*
 			}
 			wcsncpy(ctxVal.szCtx, lpModuleName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cGetModuleHandleExW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cGetModuleHandleExW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			/*
 			Mutation* mut = FindMutation(mutGetModuleHandleExW, CTX_STR, &ctxVal);
@@ -382,7 +396,8 @@ BOOL WINAPI HookGetModuleHandleExA(DWORD dwFlags, LPCSTR lpModuleName, HMODULE* 
 	BOOL* flag = NULL;
 	if (lpModuleName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 
 			ContextValue ctxVal;
@@ -392,7 +407,7 @@ BOOL WINAPI HookGetModuleHandleExA(DWORD dwFlags, LPCSTR lpModuleName, HMODULE* 
 			}
 			mbstowcs(ctxVal.szCtx, lpModuleName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cGetModuleHandleExA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cGetModuleHandleExA, CTX_STR, &ctxVal, Hash, RetAddr);
 			/*
 			Mutation* mut = FindMutation(mutGetModuleHandleExA, CTX_STR, &ctxVal);
 			if (mut != NULL) {
@@ -418,20 +433,21 @@ HMODULE WINAPI HookLoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwF
 
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 	if (lpLibFileName != NULL) {
-		if (!SkipActivity(&Hash)) {
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpLibFileName);
 			if (widec >= MAX_CTX_LEN) {
-				widec = (MAX_CTX_LEN - 1);
+				widec = MAX_CTX_LEN - 1;
 			}
 			wcsncpy(ctxVal.szCtx, lpLibFileName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cLoadLibraryExW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cLoadLibraryExW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			// mut fail if string ctx is VBox -> return NULL
-			Mutation* mut = FindMutation(mutLoadLibraryExW, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutLoadLibraryExW, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					if (flag) (*flag) = FALSE;
@@ -451,8 +467,9 @@ HMODULE WINAPI HookLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFl
 	HMODULE ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 	if (lpLibFileName != NULL) {
-		if (!SkipActivity(&Hash)) {
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 
@@ -462,10 +479,10 @@ HMODULE WINAPI HookLoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFl
 			}
 			mbstowcs(ctxVal.szCtx, lpLibFileName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cLoadLibraryExA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cLoadLibraryExA, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			// mut fail if string ctx is VBox -> return NULL
-			Mutation* mut = FindMutation(mutLoadLibraryExA, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutLoadLibraryExA, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					if (flag) (*flag) = FALSE;
@@ -487,20 +504,21 @@ HMODULE WINAPI HookLoadLibraryW(LPCWSTR lpLibFileName)
 
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 	if (lpLibFileName != NULL) {
-		if (!SkipActivity(&Hash)) {
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpLibFileName);
 			if (widec >= MAX_CTX_LEN) {
-				widec = (MAX_CTX_LEN - 1);
+				widec = MAX_CTX_LEN - 1;
 			}
 			wcsncpy(ctxVal.szCtx, lpLibFileName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cLoadLibraryW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cLoadLibraryW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			// mut fail if string ctx is VBox -> return NULL
-			Mutation* mut = FindMutation(mutLoadLibraryW, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutLoadLibraryW, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					if (flag) (*flag) = FALSE;
@@ -520,8 +538,9 @@ HMODULE WINAPI HookLoadLibraryA(LPCSTR lpLibFileName)
 	HMODULE ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 	if (lpLibFileName != NULL) {
-		if (!SkipActivity(&Hash)) {
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 
@@ -531,10 +550,10 @@ HMODULE WINAPI HookLoadLibraryA(LPCSTR lpLibFileName)
 			}
 			mbstowcs(ctxVal.szCtx, lpLibFileName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cLoadLibraryA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cLoadLibraryA, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			// mut fail if string ctx is VBox -> return NULL
-			Mutation* mut = FindMutation(mutLoadLibraryA, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutLoadLibraryA, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					if (flag) (*flag) = FALSE;
@@ -556,8 +575,9 @@ NTSTATUS NTAPI HookNtCreateThread(PHANDLE ThreadHandle, ACCESS_MASK DesiredAcces
 	//SIMPLE_LOG(NTSTATUS, NtCreateThread, ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, ClientId, ThreadContext, InitialTeb, CreateSuspended)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateThread, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateThread, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateThread(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, ClientId, ThreadContext, InitialTeb, CreateSuspended);
 	return ret;
@@ -568,8 +588,9 @@ NTSTATUS NTAPI HookNtCreateThreadEx(PHANDLE ThreadHandle, ACCESS_MASK DesiredAcc
 	NTSTATUS ret;
 
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cNtCreateThreadEx, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cNtCreateThreadEx, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgNtCreateThreadEx(ThreadHandle, DesiredAccess, ObjectAttributes, ProcessHandle, StartRoutine, Argument, CreateFlags, ZeroBits, StackSize, MaximumStackSize, AttributeList);
 	/*if (NT_SUCCESS(ret)) {

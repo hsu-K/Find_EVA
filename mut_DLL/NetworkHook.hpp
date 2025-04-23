@@ -13,10 +13,11 @@ BOOL WINAPI HookInternetCheckConnectionA(LPCSTR lpszUrl, DWORD dwFlags, DWORD dw
 
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		RecordCall(Call::cInternetCheckConnectionA, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cInternetCheckConnectionA, CTX_NONE, NULL, Hash, RetAddr);
 		if (mutInternetCheckConnectionA != NULL) {
 			if (mutInternetCheckConnectionA->mutType == MUT_SUCCEED) {
 				// perform the call regardless, to match indirect activity
@@ -45,10 +46,11 @@ BOOL WINAPI HookInternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD d
 
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		RecordCall(Call::cInternetCheckConnectionW, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cInternetCheckConnectionW, CTX_NONE, NULL, Hash, RetAddr);
 		if (mutInternetCheckConnectionW != NULL) {
 			if (mutInternetCheckConnectionW->mutType == MUT_SUCCEED) {
 				// perform the call regardless, to match indirect activity
@@ -77,7 +79,8 @@ HRESULT WINAPI HookURLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR 
 	HRESULT ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 
@@ -87,7 +90,7 @@ HRESULT WINAPI HookURLDownloadToFileW(LPUNKNOWN pCaller, LPCWSTR szURL, LPCWSTR 
 		}
 		wcsncpy(ctxVal.szCtx, szURL, widec);
 		ctxVal.szCtx[widec] = L'\0';
-		RecordCall(Call::cURLDownloadToFileW, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cURLDownloadToFileW, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgURLDownloadToFileW(pCaller, szURL, szFileName, dwReserved, lpfnCB);
 	if (flag) (*flag) = FALSE;
@@ -99,9 +102,10 @@ HINTERNET WINAPI HookInternetOpenA(LPCSTR lpszAgent, DWORD dwAccessType, LPCSTR 
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cInternetOpenA, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cInternetOpenA, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgInternetOpenA(lpszAgent, dwAccessType, lpszProxy, lpszProxyBypass, dwFlags);
 	if (flag) (*flag) = FALSE;
@@ -113,7 +117,8 @@ HINTERNET WINAPI HookInternetConnectA(HINTERNET hInternet, LPCSTR lpszServerName
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
 		ContextValue ctxVal;
@@ -124,7 +129,7 @@ HINTERNET WINAPI HookInternetConnectA(HINTERNET hInternet, LPCSTR lpszServerName
 		mbstowcs(ctxVal.szCtx, lpszServerName, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cInternetConnectA, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cInternetConnectA, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgInternetConnectA(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -136,7 +141,8 @@ HINTERNET WINAPI HookInternetConnectW(HINTERNET hInternet, LPCWSTR lpszServerNam
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 
@@ -147,7 +153,7 @@ HINTERNET WINAPI HookInternetConnectW(HINTERNET hInternet, LPCWSTR lpszServerNam
 		wcsncpy(ctxVal.szCtx, lpszServerName, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cInternetConnectW, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cInternetConnectW, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgInternetConnectW(hInternet, lpszServerName, nServerPort, lpszUserName, lpszPassword, dwService, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -159,7 +165,8 @@ HINTERNET WINAPI HookInternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCST
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		size_t widec = strlen(lpszUrl) * 2;
@@ -169,7 +176,7 @@ HINTERNET WINAPI HookInternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl, LPCST
 		mbstowcs(ctxVal.szCtx, lpszUrl, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cInternetOpenUrlA, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cInternetOpenUrlA, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgInternetOpenUrlA(hInternet, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -181,7 +188,8 @@ HINTERNET WINAPI HookHttpOpenRequestA(HINTERNET hConnect, LPCSTR lpszVerb, LPCST
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		size_t widec = strlen(lpszObjectName) * 2;
@@ -191,7 +199,7 @@ HINTERNET WINAPI HookHttpOpenRequestA(HINTERNET hConnect, LPCSTR lpszVerb, LPCST
 		mbstowcs(ctxVal.szCtx, lpszObjectName, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cHttpOpenRequestA, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cHttpOpenRequestA, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgHttpOpenRequestA(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -203,7 +211,8 @@ HINTERNET WINAPI HookHttpOpenRequestW(HINTERNET hConnect, LPCWSTR lpszVerb, LPCW
 	HINTERNET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 
@@ -213,7 +222,7 @@ HINTERNET WINAPI HookHttpOpenRequestW(HINTERNET hConnect, LPCWSTR lpszVerb, LPCW
 		}
 		wcsncpy(ctxVal.szCtx, lpszObjectName, widec);
 		ctxVal.szCtx[widec] = L'\0';
-		RecordCall(Call::cHttpOpenRequestW, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cHttpOpenRequestW, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgHttpOpenRequestW(hConnect, lpszVerb, lpszObjectName, lpszVersion, lpszReferrer, lplpszAcceptTypes, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -225,9 +234,10 @@ BOOL WINAPI HookHttpSendRequestA(HINTERNET hRequest, LPCSTR lpszHeaders, DWORD d
 	BOOL ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cHttpSendRequestA, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cHttpSendRequestA, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgHttpSendRequestA(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 	if (flag) (*flag) = FALSE;
@@ -240,9 +250,10 @@ BOOL WINAPI HookHttpSendRequestW(HINTERNET hRequest, LPCWSTR lpszHeaders, DWORD 
 	BOOL* flag = NULL;
 
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cHttpSendRequestW, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cHttpSendRequestW, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgHttpSendRequestW(hRequest, lpszHeaders, dwHeadersLength, lpOptional, dwOptionalLength);
 	if (flag) (*flag) = FALSE;
@@ -254,9 +265,10 @@ BOOL WINAPI HookInternetReadFile(HINTERNET hFile, LPVOID lpBuffersOut, DWORD dwF
 	BOOL ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cInternetReadFile, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cInternetReadFile, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgInternetReadFile(hFile, lpBuffersOut, dwFlags, dwContext);
 	if (flag) (*flag) = FALSE;
@@ -268,7 +280,8 @@ DNS_STATUS WINAPI HookDnsQuery_A(PCSTR pszName, WORD wType, DWORD Options, PVOID
 	DNS_STATUS ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		size_t widec = strlen(pszName) * 2;
@@ -278,7 +291,7 @@ DNS_STATUS WINAPI HookDnsQuery_A(PCSTR pszName, WORD wType, DWORD Options, PVOID
 		mbstowcs(ctxVal.szCtx, pszName, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cDnsQuery_A, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cDnsQuery_A, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgDnsQuery_A(pszName, wType, Options, pExtra, ppQueryResults, pReserved);
 	if (flag) (*flag) = FALSE;
@@ -290,7 +303,8 @@ DNS_STATUS WINAPI HookDnsQuery_W(PCWSTR pszName, WORD wType, DWORD Options, PVOI
 	DNS_STATUS ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 
@@ -300,7 +314,7 @@ DNS_STATUS WINAPI HookDnsQuery_W(PCWSTR pszName, WORD wType, DWORD Options, PVOI
 		}
 		wcsncpy(ctxVal.szCtx, pszName, widec);
 		ctxVal.szCtx[widec] = L'\0';
-		RecordCall(Call::cDnsQuery_W, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cDnsQuery_W, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgDnsQuery_W(pszName, wType, Options, pExtra, ppQueryResults, pReserved);
 	if (flag) (*flag) = FALSE;
@@ -312,7 +326,8 @@ INT WSAAPI HookGetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName, const ADDRINF
 	INT ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		size_t widec = wcslen(pNodeName);
@@ -321,7 +336,7 @@ INT WSAAPI HookGetAddrInfoW(PCWSTR pNodeName, PCWSTR pServiceName, const ADDRINF
 		}
 		wcsncpy(ctxVal.szCtx, pNodeName, widec);
 		ctxVal.szCtx[widec] = L'\0';
-		RecordCall(Call::cGetAddrInfoW, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cGetAddrInfoW, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgGetAddrInfoW(pNodeName, pServiceName, pHints, ppResult);
 	if (flag) (*flag) = FALSE;
@@ -333,9 +348,10 @@ int WINAPI HookWSAStartup(WORD wVersionRequired, LPWSADATA lpWSAData)
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSAStartup, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSAStartup, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSAStartup(wVersionRequired, lpWSAData);
 	if (flag) (*flag) = FALSE;
@@ -347,7 +363,8 @@ hostent* WINAPI Hookgethostbyname(const char* name)
 	hostent* ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		size_t widec = strlen(name) * 2;
@@ -357,7 +374,7 @@ hostent* WINAPI Hookgethostbyname(const char* name)
 		mbstowcs(ctxVal.szCtx, name, widec);
 		ctxVal.szCtx[widec] = L'\0';
 
-		RecordCall(Call::cgethostbyname, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cgethostbyname, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = Oggethostbyname(name);
 	if (flag) (*flag) = FALSE;
@@ -369,9 +386,10 @@ SOCKET WSAAPI Hooksocket(int af, int type, int protocol)
 	SOCKET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::csocket, CTX_NONE, NULL, Hash);
+		RecordCall(Call::csocket, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogsocket(af, type, protocol);
 	if (flag) (*flag) = FALSE;
@@ -383,9 +401,10 @@ int WSAAPI Hookconnect(SOCKET s, const sockaddr* name, int namelen)
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cconnect, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cconnect, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogconnect(s, name, namelen);
 	if (flag) (*flag) = FALSE;
@@ -397,9 +416,10 @@ int WSAAPI Hooksend(SOCKET s, const char* buf, int len, int flags)
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::csend, CTX_NONE, NULL, Hash);
+		RecordCall(Call::csend, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogsend(s, buf, len, flags);
 	if (flag) (*flag) = FALSE;
@@ -411,9 +431,10 @@ int WSAAPI Hooksendto(SOCKET s, const char* buf, int len, int flags, const socka
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::csendto, CTX_NONE, NULL, Hash);
+		RecordCall(Call::csendto, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogsendto(s, buf, len, flags, to, tolen);
 	if (flag) (*flag) = FALSE;
@@ -425,9 +446,10 @@ int WINAPI Hookrecv(SOCKET s, char* buf, int len, int flags)
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::crecv, CTX_NONE, NULL, Hash);
+		RecordCall(Call::crecv, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogrecv(s, buf, len, flags);
 	if (flag) (*flag) = FALSE;
@@ -439,9 +461,10 @@ int WINAPI Hookrecvfrom(SOCKET s, char* buf, int len, int flags, sockaddr* from,
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::crecvfrom, CTX_NONE, NULL, Hash);
+		RecordCall(Call::crecvfrom, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogrecvfrom(s, buf, len, flags, from, fromlen);
 	if (flag) (*flag) = FALSE;
@@ -453,9 +476,10 @@ int WINAPI Hookbind(SOCKET s, const sockaddr* addr, int namelen)
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cbind, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cbind, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = Ogbind(s, addr, namelen);
 	if (flag) (*flag) = FALSE;
@@ -467,9 +491,10 @@ int WSAAPI HookWSARecv(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWOR
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSARecv, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSARecv, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSARecv(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags, lpOverlapped, lpCompletionRoutine);
 	if (flag) (*flag) = FALSE;
@@ -481,9 +506,10 @@ int WSAAPI HookWSARecvFrom(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LP
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSARecvFrom, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSARecvFrom, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSARecvFrom(s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags, lpFrom, lpFromlen, lpOverlapped, lpCompletionRoutine);
 	if (flag) (*flag) = FALSE;
@@ -495,9 +521,10 @@ int WSAAPI HookWSASend(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDWOR
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSASend, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSASend, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSASend(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpOverlapped, lpCompletionRoutine);
 	if (flag) (*flag) = FALSE;
@@ -509,9 +536,10 @@ int WSAAPI HookWSASendTo(SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount, LPDW
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSASendTo, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSASendTo, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSASendTo(s, lpBuffers, dwBufferCount, lpNumberOfBytesSent, dwFlags, lpTo, iTolen, lpOverlapped, lpCompletionRoutine);
 	if (flag) (*flag) = FALSE;
@@ -523,9 +551,10 @@ SOCKET WSAAPI HookWSASocketW(int af, int type, int protocol, LPWSAPROTOCOL_INFOW
 	SOCKET ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cWSASocketW, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cWSASocketW, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgWSASocketW(af, type, protocol, lpProtocolInfo, g, dwFlags);
 	if (flag) (*flag) = FALSE;

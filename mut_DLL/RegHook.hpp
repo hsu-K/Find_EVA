@@ -6,7 +6,7 @@
 #include "syscalls.h"
 #include "GlobalMutation.hpp"
 
-// ·í«e
+// ï¿½ï¿½ï¿½e
 // Environment Query Hooks
 NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes)
 {
@@ -15,18 +15,18 @@ NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJ
 
 	BOOL* flag = NULL;
 
-	// ÀË¬d¶Ç¤JªºObjectAttributes¬O§_¬°ªÅ
+	// ï¿½Ë¬dï¿½Ç¤Jï¿½ï¿½ObjectAttributesï¿½Oï¿½_ï¿½ï¿½ï¿½ï¿½
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
 		UINT64 RetAddr;
 
-		// §Q¥ÎSkipActivity¨Ó¨M©w¬O§_­n°O¿ý³o¦¸ªº½Õ¥Î¡AÁ×§KHook¤SHook
+		// ï¿½Qï¿½ï¿½SkipActivityï¿½Ó¨Mï¿½wï¿½Oï¿½_ï¿½nï¿½Oï¿½ï¿½ï¿½oï¿½ï¿½ï¿½ï¿½ï¿½Õ¥Î¡Aï¿½×§KHookï¿½SHook
 		if (!SkipActivity(&Hash, &RetAddr)) {
-			// ¬ö¿ý¤w¸g¶i¤JHook
+			// ï¿½ï¿½ï¿½ï¿½ï¿½wï¿½gï¿½iï¿½JHook
 			flag = EnterHook();
 			ContextValue ctxVal;
-			//cout << "¶i¤JHook__" << endl;
-			// ¬ö¿ýObjectAttributes->ObjectName
+			//cout << "ï¿½iï¿½JHook__" << endl;
+			// ï¿½ï¿½ï¿½ï¿½ObjectAttributes->ObjectName
 			size_t widec = ObjectAttributes->ObjectName->Length / sizeof(WCHAR);
 			if (widec >= MAX_CTX_LEN) {
 				widec = MAX_CTX_LEN - 1;
@@ -35,10 +35,10 @@ NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJ
 			ctxVal.szCtx[widec] = L'\0';
 
 			//cout << ctxVal.szCtx << endl;
-			// ¬ö¿ýCall¡A¨Ã¦^¶Çµ¹¥Dµ{¦¡¬ö¿ý
+			// ï¿½ï¿½ï¿½ï¿½Callï¿½Aï¿½Ã¦^ï¿½Çµï¿½ï¿½Dï¿½{ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			RecordCall(Call::cNtOpenKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			// §ä¨ì¹ïÀ³ªºMutation
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Mutation
 			Mutation* mut = FindMutation(mutNtOpenKey, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
@@ -46,7 +46,7 @@ NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJ
 					printf("Applying MUT_FAIL mutation to NtOpenKey.\n");
 #endif
 					if (flag) { (*flag) = FALSE; }
-					// ±j¨î§ó§ï¨ç¼Æªº¦^¶Ç­È
+					// ï¿½jï¿½ï¿½ï¿½ï¿½ï¿½Æªï¿½ï¿½^ï¿½Ç­ï¿½
 					return (NTSTATUS)mut->mutValue.nValue;
 				}
 			}
@@ -66,7 +66,8 @@ NTSTATUS NTAPI HookNtOpenKeyEx(PHANDLE KeyHandle, ACCESS_MASK DesiredAccess, POB
 	BOOL* flag = NULL;
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 
@@ -76,9 +77,9 @@ NTSTATUS NTAPI HookNtOpenKeyEx(PHANDLE KeyHandle, ACCESS_MASK DesiredAccess, POB
 			}
 			wcsncpy(ctxVal.szCtx, ObjectAttributes->ObjectName->Buffer, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cNtOpenKeyEx, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cNtOpenKeyEx, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutNtOpenKeyEx, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutNtOpenKeyEx, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 #ifdef __DEBUG_PRINT
@@ -106,7 +107,8 @@ NTSTATUS NTAPI HookNtQueryValueKey(HANDLE KeyHandle, PUNICODE_STRING ValueName, 
 	BOOL* flag = NULL;
 	if (ValueName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = ValueName->Length / sizeof(wchar_t);
@@ -133,9 +135,9 @@ NTSTATUS NTAPI HookNtQueryValueKey(HANDLE KeyHandle, PUNICODE_STRING ValueName, 
 							wcscat(ctxVal.szCtx, info->Data);
 						}
 
-						RecordCall(Call::cNtQueryValueKey, CTX_STR, &ctxVal, Hash);
+						RecordCall(Call::cNtQueryValueKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
-						Mutation* mut = FindMutation(mutNtQueryValueKey, CTX_STR, &ctxVal);
+						Mutation* mut = FindMutation(mutNtQueryValueKey, CTX_STR, &ctxVal, Hash);
 						if (mut != NULL) {
 							if (mut->mutType == MUT_FAIL) {
 								// return error code
@@ -180,10 +182,9 @@ NTSTATUS NTAPI HookNtCreateKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, PO
 	BOOL* flag = NULL;
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
-
-
 
 			ContextValue ctxVal;
 			size_t widec = ObjectAttributes->ObjectName->Length / sizeof(wchar_t);
@@ -193,9 +194,9 @@ NTSTATUS NTAPI HookNtCreateKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, PO
 			wcsncpy(ctxVal.szCtx, ObjectAttributes->ObjectName->Buffer, widec);
 			ctxVal.szCtx[widec] = L'\0';
 
-			RecordCall(Call::cNtCreateKey, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cNtCreateKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutNtCreateKey, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutNtCreateKey, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_ALT_NUM && Disposition != NULL) {
 #ifdef __DEBUG_PRINT
@@ -229,7 +230,8 @@ NTSTATUS NTAPI HookNtEnumerateKey(HANDLE KeyHandle, ULONG Index, KEY_INFORMATION
 	if (GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 		if (KeyInformationClass == KeyBasicInformation) {
 			UINT64 Hash;
-			if (!SkipActivity(&Hash)) {
+			UINT64 RetAddr = 0;
+			if (!SkipActivity(&Hash, &RetAddr)) {
 				flag = EnterHook();
 				ret = OgNtEnumerateKey(KeyHandle, Index, KeyInformationClass, KeyInformation, Length, ResultLength);
 				if (NT_SUCCESS(ret)) {
@@ -247,10 +249,10 @@ NTSTATUS NTAPI HookNtEnumerateKey(HANDLE KeyHandle, ULONG Index, KEY_INFORMATION
 						}
 						memcpy(&ctxVal.szCtx[curLen], pkey->Name, copylen);
 						ctxVal.szCtx[curLen + (copylen / 2)] = L'\0';
-						RecordCall(Call::cNtEnumerateKey, CTX_STR, &ctxVal, Hash);
+						RecordCall(Call::cNtEnumerateKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
 						// Mutations
-						Mutation* mut = FindMutation(mutNtEnumerateKey, CTX_STR, &ctxVal);
+						Mutation* mut = FindMutation(mutNtEnumerateKey, CTX_STR, &ctxVal, Hash);
 						if (mut != NULL) {
 							if (mut->mutType == MUT_FAIL) {
 								KeyInformation = NULL;
@@ -293,7 +295,8 @@ NTSTATUS NTAPI HookNtEnumerateValueKey(HANDLE KeyHandle, ULONG Index, KEY_VALUE_
 	BOOL* flag = NULL;
 	if (KeyValueInformationClass == KeyValueFullInformation) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ret = OgNtEnumerateValueKey(KeyHandle, Index, KeyValueInformationClass, KeyValueInformation, Length, ResultLength);
 			if (NT_SUCCESS(ret)) {
@@ -320,9 +323,9 @@ NTSTATUS NTAPI HookNtEnumerateValueKey(HANDLE KeyHandle, ULONG Index, KEY_VALUE_
 							wcscat(ctxVal.szCtx, data);
 						}
 
-						RecordCall(Call::cNtEnumerateValueKey, CTX_STR, &ctxVal, Hash);
+						RecordCall(Call::cNtEnumerateValueKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
-						Mutation* mut = FindMutation(mutNtEnumerateValueKey, CTX_STR, &ctxVal);
+						Mutation* mut = FindMutation(mutNtEnumerateValueKey, CTX_STR, &ctxVal, Hash);
 						if (mut != NULL) {
 							if (mut->mutType == MUT_FAIL) {
 #ifdef __DEBUG_PRINT
@@ -376,7 +379,8 @@ NTSTATUS NTAPI HookNtQueryLicenseValue(PUNICODE_STRING ValueName, PULONG Type, P
 
 	if (ValueName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = ValueName->Length / sizeof(wchar_t);
@@ -385,9 +389,9 @@ NTSTATUS NTAPI HookNtQueryLicenseValue(PUNICODE_STRING ValueName, PULONG Type, P
 			}
 			wcsncpy(ctxVal.szCtx, ValueName->Buffer, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cNtQueryLicenseValue, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cNtQueryLicenseValue, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutNtQueryLicenseValue, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutNtQueryLicenseValue, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_SUCCEED) {
 #ifdef __DEBUG_PRINT
@@ -420,7 +424,8 @@ NTSTATUS NTAPI HookNtReplaceKey(POBJECT_ATTRIBUTES NewHiveFileName, HANDLE KeyHa
 	// SIMPLE_LOG(NTSTATUS, NtReplaceKey, NewHiveFileName, KeyHandle, BackupHiveFileName)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 
 		ULONG NameSize;
 		ContextValue ctxVal;
@@ -428,7 +433,7 @@ NTSTATUS NTAPI HookNtReplaceKey(POBJECT_ATTRIBUTES NewHiveFileName, HANDLE KeyHa
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtReplaceKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtReplaceKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtReplaceKey(NewHiveFileName, KeyHandle, BackupHiveFileName);
 	return ret;
@@ -439,14 +444,15 @@ NTSTATUS NTAPI HookNtRenameKey(HANDLE KeyHandle, PUNICODE_STRING NewName)
 	// SIMPLE_LOG(NTSTATUS, NtRenameKey, KeyHandle, NewName)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtRenameKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtRenameKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtRenameKey(KeyHandle, NewName);
 	return ret;
@@ -457,14 +463,15 @@ NTSTATUS NTAPI HookNtSaveKey(HANDLE KeyHandle, HANDLE FileHandle)
 	// SIMPLE_LOG(NTSTATUS, NtSaveKey, KeyHandle, FileHandle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtSaveKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtSaveKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtSaveKey(KeyHandle, FileHandle);
 	return ret;
@@ -475,14 +482,15 @@ NTSTATUS NTAPI HookNtSaveKeyEx(HANDLE KeyHandle, HANDLE FileHandle, ULONG Format
 	// SIMPLE_LOG(NTSTATUS, NtSaveKeyEx, KeyHandle, FileHandle, Format)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtSaveKeyEx, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtSaveKeyEx, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtSaveKeyEx(KeyHandle, FileHandle, Format);
 	return ret;
@@ -493,14 +501,15 @@ NTSTATUS NTAPI HookNtSetValueKey(HANDLE KeyHandle, PUNICODE_STRING ValueName, UL
 	// SIMPLE_LOG(NTSTATUS, NtSetValueKey, KeyHandle, ValueName, TitleIndex, Type, Data, DataSize)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtSetValueKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtSetValueKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtSetValueKey(KeyHandle, ValueName, TitleIndex, Type, Data, DataSize);
 	return ret;
@@ -511,14 +520,15 @@ NTSTATUS NTAPI HookNtDeleteKey(HANDLE KeyHandle)
 	// SIMPLE_LOG(NTSTATUS, NtDeleteKey, KeyHandle)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtDeleteKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtDeleteKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtDeleteKey(KeyHandle);
 	return ret;
@@ -529,14 +539,15 @@ NTSTATUS NTAPI HookNtDeleteValueKey(HANDLE KeyHandle, PUNICODE_STRING ValueName)
 	// SIMPLE_LOG(NTSTATUS, NtDeleteValueKey, KeyHandle, ValueName)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtDeleteValueKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtDeleteValueKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtDeleteValueKey(KeyHandle, ValueName);
 	return ret;
@@ -547,14 +558,15 @@ NTSTATUS NTAPI HookNtNotifyChangeKey(HANDLE KeyHandle, HANDLE EventHandle, PIO_A
 	// SIMPLE_LOG(NTSTATUS, NtNotifyChangeKey, KeyHandle, EventHandle, ApcRoutine, ApcRoutineContext, IoStatusBlock, NotifyFilter, WatchSubtree, RegChangesDataBuffer, RegChangesDataBufferLength, Asynchronous)
 	NTSTATUS ret;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		ULONG NameSize;
 		ContextValue ctxVal;
 		if (!GetKeyNameFromHandle(KeyHandle, ctxVal.szCtx, &NameSize)) {
 			wcscpy(ctxVal.szCtx, L"Unknown");
 		}
 
-		RecordCall(Call::cNtNotifyChangeKey, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cNtNotifyChangeKey, CTX_STR, &ctxVal, Hash, RetAddr);
 	}
 	ret = OgNtNotifyChangeKey(KeyHandle, EventHandle, ApcRoutine, ApcRoutineContext, IoStatusBlock, NotifyFilter, WatchSubtree, RegChangesDataBuffer, RegChangesDataBufferLength, Asynchronous);
 	return ret;

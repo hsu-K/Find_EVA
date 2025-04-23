@@ -15,7 +15,8 @@ HWND WINAPI HookFindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName)
 	BOOL* flag = NULL;
 	if (lpWindowName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = strlen(lpWindowName) * 2;
@@ -24,9 +25,9 @@ HWND WINAPI HookFindWindowA(LPCSTR lpClassName, LPCSTR lpWindowName)
 			}
 			mbstowcs(ctxVal.szCtx, lpWindowName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cFindWindowA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cFindWindowA, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutFindWindowA, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutFindWindowA, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					SetLastError(0);
@@ -50,7 +51,8 @@ HWND WINAPI HookFindWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName)
 	BOOL* flag = NULL;
 	if (lpWindowName != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpWindowName);
@@ -59,9 +61,9 @@ HWND WINAPI HookFindWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName)
 			}
 			wcsncpy(ctxVal.szCtx, lpWindowName, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cFindWindowW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cFindWindowW, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutFindWindowW, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutFindWindowW, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					SetLastError(0);
@@ -86,7 +88,8 @@ HWND WINAPI HookFindWindowExA(HWND hWndParent, HWND hWndChildAfter, LPCSTR lpszC
 	BOOL* flag = NULL;
 	if (lpszWindow != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = strlen(lpszWindow) * 2;
@@ -95,9 +98,9 @@ HWND WINAPI HookFindWindowExA(HWND hWndParent, HWND hWndChildAfter, LPCSTR lpszC
 			}
 			mbstowcs(ctxVal.szCtx, lpszWindow, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cFindWindowExA, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cFindWindowExA, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutFindWindowExA, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutFindWindowExA, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					SetLastError(0);
@@ -122,7 +125,8 @@ HWND WINAPI HookFindWindowExW(HWND hWndParent, HWND hWndChildAfter, LPCWSTR lpsz
 	BOOL* flag = NULL;
 	if (lpszWindow != NULL) {
 		UINT64 Hash;
-		if (!SkipActivity(&Hash)) {
+		UINT64 RetAddr = 0;
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			flag = EnterHook();
 			ContextValue ctxVal;
 			size_t widec = wcslen(lpszWindow);
@@ -131,9 +135,9 @@ HWND WINAPI HookFindWindowExW(HWND hWndParent, HWND hWndChildAfter, LPCWSTR lpsz
 			}
 			wcsncpy(ctxVal.szCtx, lpszWindow, widec);
 			ctxVal.szCtx[widec] = L'\0';
-			RecordCall(Call::cFindWindowExW, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cFindWindowExW, CTX_STR, &ctxVal, Hash, RetAddr);
 
-			Mutation* mut = FindMutation(mutFindWindowExW, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutFindWindowExW, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 					SetLastError(0);
@@ -156,8 +160,9 @@ BOOL WINAPI HookGetWindowRect(HWND hWnd, LPRECT lpRect)
 	// BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cGetWindowRect, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cGetWindowRect, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgGetWindowRect(hWnd, lpRect);
 	return ret;
@@ -170,8 +175,9 @@ BOOL WINAPI HookGetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpmi)
 	// BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cGetMonitorInfoA, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cGetMonitorInfoA, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgGetMonitorInfoA(hMonitor, lpmi);
 	return ret;
@@ -184,8 +190,9 @@ BOOL WINAPI HookGetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpmi)
 	// BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
-		RecordCall(Call::cGetMonitorInfoW, CTX_NONE, NULL, Hash);
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
+		RecordCall(Call::cGetMonitorInfoW, CTX_NONE, NULL, Hash, RetAddr);
 	}
 	ret = OgGetMonitorInfoW(hMonitor, lpmi);
 	return ret;
@@ -198,14 +205,15 @@ int WINAPI HookGetSystemMetrics(int nIndex)
 	BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		ctxVal.dwCtx = nIndex;
-		RecordCall(Call::cGetSystemMetrics, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cGetSystemMetrics, CTX_NUM, &ctxVal, Hash, RetAddr);
 
 		// mut fail: return 0
-		/*Mutation* mut = FindMutation(mutGetSystemMetrics, CTX_NUM, &ctxVal);
+		/*Mutation* mut = FindMutation(mutGetSystemMetrics, CTX_NUM, &ctxVal, Hash);
 		if (mut != NULL) {
 			// there is a mutation
 			if (mut->mutType == MUT_FAIL) {
@@ -226,13 +234,14 @@ BOOL WINAPI HookSystemParametersInfoA(UINT uiAction, UINT uiParam, PVOID pvParam
 	BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		ctxVal.dwCtx = uiAction;
-		RecordCall(Call::cSystemParametersInfoA, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cSystemParametersInfoA, CTX_NUM, &ctxVal, Hash, RetAddr);
 		/*
-		Mutation* mut = FindMutation(mutSystemParametersInfoA, CTX_NUM, &ctxVal);
+		Mutation* mut = FindMutation(mutSystemParametersInfoA, CTX_NUM, &ctxVal, Hash);
 		if (mut != NULL) {
 			// there is a mutation
 			if (mut->mutType == MUT_FAIL) {
@@ -253,13 +262,14 @@ BOOL WINAPI HookSystemParametersInfoW(UINT uiAction, UINT uiParam, PVOID pvParam
 	BOOL* flag = NULL;
 	// (TODO)
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 		ContextValue ctxVal;
 		ctxVal.dwCtx = uiAction;
-		RecordCall(Call::cSystemParametersInfoW, CTX_NUM, &ctxVal, Hash);
+		RecordCall(Call::cSystemParametersInfoW, CTX_NUM, &ctxVal, Hash, RetAddr);
 		/*
-		Mutation* mut = FindMutation(mutSystemParametersInfoW, CTX_NUM, &ctxVal);
+		Mutation* mut = FindMutation(mutSystemParametersInfoW, CTX_NUM, &ctxVal, Hash);
 		if (mut != NULL) {
 			// there is a mutation
 			if (mut->mutType == MUT_FAIL) {
@@ -280,9 +290,10 @@ HWND WINAPI HookGetForegroundWindow()
 
 	BOOL* flag = NULL;
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cGetForegroundWindow, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cGetForegroundWindow, CTX_NONE, NULL, Hash, RetAddr);
 
 		if (mutGetForegroundWindow != NULL) { // there is a mutation
 #ifdef __DEBUG_PRINT
@@ -326,9 +337,10 @@ BOOL WINAPI HookGetCursorPos(LPPOINT lpPoint)
 	//printf("GetCursorPos Return Addr: %p\n", _ReturnAddress());
 
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cGetCursorPos, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cGetCursorPos, CTX_NONE, NULL, Hash, RetAddr);
 
 		if (mutGetCursorPos != NULL) { // there is a mutation
 #ifdef __DEBUG_PRINT
@@ -374,9 +386,10 @@ SHORT WINAPI HookGetAsyncKeyState(int vKey)
 	BOOL* flag = NULL;
 
 	UINT64 Hash;
-	if (!SkipActivity(&Hash)) {
+	UINT64 RetAddr = 0;
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
-		RecordCall(Call::cGetAsyncKeyState, CTX_NONE, NULL, Hash);
+		RecordCall(Call::cGetAsyncKeyState, CTX_NONE, NULL, Hash, RetAddr);
 
 		if (mutGetAsyncKeyState != NULL) { // there is a mutation
 #ifdef __DEBUG_PRINT
@@ -394,7 +407,6 @@ SHORT WINAPI HookGetAsyncKeyState(int vKey)
 	return ret;
 }
 
-
 int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType)
 {
 	int ret;
@@ -402,36 +414,36 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 	UINT64 Hash;
 	UINT64 RetAddr = 0;
 
-	// ÀË¬d¬O§_»İ­n°O¿ı¦¹½Õ¥Î
+	
 	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		// °O¿ı½Õ¥Î¸ê°T
+		
 		ContextValue ctxVal;
-		// °O¿ı¹ï¸Ü®Ø¼ĞÃD
+		
 		size_t capLen = wcslen(lpCaption);
 		if (capLen >= MAX_CTX_LEN - 1) {
-			capLen = MAX_CTX_LEN - 10;  // «O¯d¤@¨ÇªÅ¶¡µ¹¤å¥»¤º®e
+			capLen = MAX_CTX_LEN - 10;  
 		}
 		wcsncpy(ctxVal.szCtx, lpCaption, capLen);
 		ctxVal.szCtx[capLen] = L':';
 
-		// °l¥[¹ï¸Ü®Ø¤å¥»ªº«e´X­Ó¦r²Å
+		
 		size_t textLen = wcslen(lpText);
-		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // ¦©°£¼ĞÃD+«_¸¹ªºªø«×
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  
 		if (textLen > remainLen) {
 			textLen = remainLen;
 		}
 		wcsncpy(ctxVal.szCtx + capLen + 1, lpText, textLen);
 		ctxVal.szCtx[capLen + 1 + textLen] = L'\0';
 
-		// °O¿ı½Õ¥Î
+		
 		RecordCall(Call::cMessageBoxW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 #ifdef __DEBUG_PRINT
 		printf("MessageBoxW detected: %ws - %ws\n", lpCaption, lpText);
 #endif
-		// §ä¨ì¹ïÀ³ªºMutation
+		
 		Mutation* mut = FindMutation(mutMessageBoxW, CTX_STR, &ctxVal, Hash);
 		if (mut != NULL) {
 			if (mut->mutType == MUT_ALT_NUM) {
@@ -439,14 +451,12 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 				printf("Applying MUT_FAIL mutation to NtOpenKey.\n");
 #endif
 				if (flag) { (*flag) = FALSE; }
-				//std::cout << "±j¨î¬ğÅÜ¡A¦ì¸m: 0x" << std::hex << Call_from << std::dec << std::endl;
-				// ±j¨î§ó§ï¨ç¼Æªº¦^¶Ç­È
+
 				return (NTSTATUS)mut->mutValue.nValue;
 			}
 		}
 
-		// ¦b³o¸Ì§Ú­Ì¥i¥H¥ß§Yªğ¦^¤@­Óµ²ªG¡A¦Ó¤£¹ê»ÚÅã¥Ü¹ï¸Ü®Ø
-		// ¼ÒÀÀ¥Î¤á¿ï¾Ü¤F¡u½T©w¡v«ö¶s (IDOK = 1)
+
 		//if (flag) (*flag) = FALSE;
 		ret = OgMessageBoxW(hWnd, lpText, lpCaption, uType);
 		//cout << *flag << endl;
@@ -455,7 +465,6 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 		//return IDOK;
 	}
 
-	// ¦pªG¤£»İ­nhook«h°õ¦æ­ì©l¨ç¼Æ
 	ret = OgMessageBoxW(hWnd, lpText, lpCaption, uType);
 	if (flag) (*flag) = FALSE;
 	return ret;
@@ -466,66 +475,63 @@ int WINAPI HookMessageBoxA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uTyp
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 
-	// ÀË¬d¬O§_»İ­n°O¿ı¦¹½Õ¥Î
-	if (!SkipActivity(&Hash)) {
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		// °O¿ı½Õ¥Î¸ê°T
 		ContextValue ctxVal;
 
-		// ¥ı±N ANSI ¦r²ÅÂà´«¬°¼e¦r²Å¡A¥H«K²Î¤@³B²z
-		// °O¿ı¹ï¸Ü®Ø¼ĞÃD
+
 		size_t capLen = strlen(lpCaption);
 		if (capLen >= MAX_CTX_LEN - 1) {
-			capLen = MAX_CTX_LEN - 10;  // «O¯d¤@¨ÇªÅ¶¡µ¹¤å¥»¤º®e
+			capLen = MAX_CTX_LEN - 10;
 		}
 
-		// Âà´«¼ĞÃD±q ANSI ¨ì¼e¦r²Å
+
 		size_t convertedChars = 0;
 		mbstowcs_s(&convertedChars, ctxVal.szCtx, MAX_CTX_LEN, lpCaption, capLen);
 		ctxVal.szCtx[capLen] = L':';
 
-		// °l¥[¹ï¸Ü®Ø¤å¥»ªº«e´X­Ó¦r²Å
+
 		size_t textLen = strlen(lpText);
-		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // ¦©°£¼ĞÃD+«_¸¹ªºªø«×
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;
 		if (textLen > remainLen) {
 			textLen = remainLen;
 		}
 
-		// Âà´«¤å¥»±q ANSI ¨ì¼e¦r²Å¡A¨Ã±µ¦b«_¸¹«á­±
+
 		mbstowcs_s(&convertedChars, ctxVal.szCtx + capLen + 1,
 			MAX_CTX_LEN - capLen - 1, lpText, textLen);
 
-		// ½T«O¦r²Å¦ê¥¿½T²×¤î
+
 		ctxVal.szCtx[MAX_CTX_LEN - 1] = L'\0';
 
-		// °O¿ı½Õ¥Î
-		RecordCall(Call::cMessageBoxA, CTX_STR, &ctxVal, Hash);
+
+		RecordCall(Call::cMessageBoxA, CTX_STR, &ctxVal, Hash, RetAddr);
 
 #ifdef __DEBUG_PRINT
 		printf("MessageBoxA detected: %s - %s\n", lpCaption, lpText);
 #endif
-		// §ä¨ì¹ïÀ³ªºMutation
-		Mutation* mut = FindMutation(mutMessageBoxA, CTX_STR, &ctxVal);
+
+		Mutation* mut = FindMutation(mutMessageBoxA, CTX_STR, &ctxVal, Hash);
 		if (mut != NULL) {
 			if (mut->mutType == MUT_ALT_NUM) {
 #ifdef __DEBUG_PRINT
 				printf("Applying MUT_ALT_NUM mutation to MessageBoxA.\n");
 #endif
 				if (flag) { (*flag) = FALSE; }
-				// ±j¨î§ó§ï¨ç¼Æªº¦^¶Ç­È
 				return (int)mut->mutValue.nValue;
 			}
 		}
 
-		// °õ¦æ­ì©l¨ç¼Æ
+
 		ret = OgMessageBoxA(hWnd, lpText, lpCaption, uType);
 		if (flag) (*flag) = FALSE;
 		return ret;
 	}
 
-	// ¦pªG¤£»İ­nhook«h°õ¦æ­ì©l¨ç¼Æ
+
 	ret = OgMessageBoxA(hWnd, lpText, lpCaption, uType);
 	if (flag) (*flag) = FALSE;
 	return ret;
@@ -536,56 +542,57 @@ int WINAPI HookMessageBoxExW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT 
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 
-	// ÀË¬d¬O§_»İ­n°O¿ı¦¹½Õ¥Î
-	if (!SkipActivity(&Hash)) {
+	// æª¢æŸ¥æ˜¯å¦éœ€è¦è¨˜éŒ„æ­¤å‡½æ•¸
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		// °O¿ı½Õ¥Î¸ê°T
+		// è¨˜éŒ„å‡½æ•¸è³‡è¨Š
 		ContextValue ctxVal;
-		// °O¿ı¹ï¸Ü®Ø¼ĞÃD
+		// è¨˜éŒ„å°è©±æ¡†æ¨™é¡Œ
 		size_t capLen = wcslen(lpCaption);
 		if (capLen >= MAX_CTX_LEN - 1) {
-			capLen = MAX_CTX_LEN - 10;  // «O¯d¤@¨ÇªÅ¶¡µ¹¤å¥»¤º®e
+			capLen = MAX_CTX_LEN - 10;  // é ç•™ä¸€äº›ç©ºé–“çµ¦å…§å®¹
 		}
 		wcsncpy(ctxVal.szCtx, lpCaption, capLen);
 		ctxVal.szCtx[capLen] = L':';
 
-		// °l¥[¹ï¸Ü®Ø¤å¥»ªº«e´X­Ó¦r²Å
+		// æ·»åŠ å°è©±æ¡†å…§å®¹æ–‡å­—
 		size_t textLen = wcslen(lpText);
-		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // ¦©°£¼ĞÃD+«_¸¹ªºªø«×
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // æ¸›æ‰æ¨™é¡Œ+åˆ†éš”ç¬¦è™Ÿ
 		if (textLen > remainLen) {
 			textLen = remainLen;
 		}
 		wcsncpy(ctxVal.szCtx + capLen + 1, lpText, textLen);
 		ctxVal.szCtx[capLen + 1 + textLen] = L'\0';
 
-		// °O¿ı½Õ¥Î
-		RecordCall(Call::cMessageBoxExW, CTX_STR, &ctxVal, Hash);
+		// è¨˜éŒ„å‡½æ•¸
+		RecordCall(Call::cMessageBoxExW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 #ifdef __DEBUG_PRINT
 		printf("MessageBoxExW detected: %ws - %ws (language: %d)\n", lpCaption, lpText, wLanguageId);
 #endif
-		// §ä¨ì¹ïÀ³ªºMutation
-		Mutation* mut = FindMutation(mutMessageBoxExW, CTX_STR, &ctxVal);
+		// å°‹æ‰¾å¯èƒ½çš„Mutation
+		Mutation* mut = FindMutation(mutMessageBoxExW, CTX_STR, &ctxVal, Hash);
 		if (mut != NULL) {
 			if (mut->mutType == MUT_ALT_NUM) {
 #ifdef __DEBUG_PRINT
 				printf("Applying MUT_ALT_NUM mutation to MessageBoxExW.\n");
 #endif
 				if (flag) { (*flag) = FALSE; }
-				// ±j¨î§ó§ï¨ç¼Æªº¦^¶Ç­È
+				// è¿”å›æŒ‡å®šçš„å›å‚³å€¼
 				return (int)mut->mutValue.nValue;
 			}
 		}
 
-		// °õ¦æ­ì©l¨ç¼Æ
+		// åŸ·è¡ŒåŸå‡½æ•¸
 		ret = OgMessageBoxExW(hWnd, lpText, lpCaption, uType, wLanguageId);
 		if (flag) (*flag) = FALSE;
 		return ret;
 	}
 
-	// ¦pªG¤£»İ­nhook«h°õ¦æ­ì©l¨ç¼Æ
+	// å¦‚æœä¸éœ€hookå‰‡åŸ·è¡ŒåŸå‡½æ•¸
 	ret = OgMessageBoxExW(hWnd, lpText, lpCaption, uType, wLanguageId);
 	if (flag) (*flag) = FALSE;
 	return ret;
@@ -596,66 +603,67 @@ int WINAPI HookMessageBoxExA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uT
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 
-	// ÀË¬d¬O§_»İ­n°O¿ı¦¹½Õ¥Î
-	if (!SkipActivity(&Hash)) {
+	// æª¢æŸ¥æ˜¯å¦éœ€è¦è¨˜éŒ„æ­¤å‡½æ•¸
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
-		// °O¿ı½Õ¥Î¸ê°T
+		// è¨˜éŒ„å‡½æ•¸è³‡è¨Š
 		ContextValue ctxVal;
 
-		// ¥ı±N ANSI ¦r²ÅÂà´«¬°¼e¦r²Å¡A¥H«K²Î¤@³B²z
-		// °O¿ı¹ï¸Ü®Ø¼ĞÃD
+		// å°‡ ANSI å­—ä¸²è½‰æ›æˆå¯¬å­—ä¸²ï¼Œä»¥ä¾¿çµ±ä¸€è™•ç†
+		// è¨˜éŒ„å°è©±æ¡†æ¨™é¡Œ
 		size_t capLen = strlen(lpCaption);
 		if (capLen >= MAX_CTX_LEN - 1) {
-			capLen = MAX_CTX_LEN - 10;  // «O¯d¤@¨ÇªÅ¶¡µ¹¤å¥»¤º®e
+			capLen = MAX_CTX_LEN - 10;  // é ç•™ä¸€äº›ç©ºé–“çµ¦å…§å®¹
 		}
 
-		// Âà´«¼ĞÃD±q ANSI ¨ì¼e¦r²Å
+		// è½‰æ›æ¨™é¡Œå¾ ANSI åˆ°å¯¬å­—ä¸²
 		size_t convertedChars = 0;
 		mbstowcs_s(&convertedChars, ctxVal.szCtx, MAX_CTX_LEN, lpCaption, capLen);
 		ctxVal.szCtx[capLen] = L':';
 
-		// °l¥[¹ï¸Ü®Ø¤å¥»ªº«e´X­Ó¦r²Å
+		// æ·»åŠ å°è©±æ¡†å…§å®¹æ–‡å­—
 		size_t textLen = strlen(lpText);
-		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // ¦©°£¼ĞÃD+«_¸¹ªºªø«×
+		size_t remainLen = MAX_CTX_LEN - capLen - 2;  // æ¸›æ‰æ¨™é¡Œ+åˆ†éš”ç¬¦è™Ÿ
 		if (textLen > remainLen) {
 			textLen = remainLen;
 		}
 
-		// Âà´«¤å¥»±q ANSI ¨ì¼e¦r²Å¡A¨Ã±µ¦b«_¸¹«á­±
+		// è½‰æ›å…§å®¹å¾ ANSI åˆ°å¯¬å­—ä¸²ï¼Œä¸¦æ”¾åœ¨åˆ†éš”ç¬¦å¾Œ
 		mbstowcs_s(&convertedChars, ctxVal.szCtx + capLen + 1,
 			MAX_CTX_LEN - capLen - 1, lpText, textLen);
 
-		// ½T«O¦r²Å¦ê¥¿½T²×¤î
+		// ç¢ºä¿å­—ä¸²æ­£ç¢ºçµ‚æ­¢
 		ctxVal.szCtx[MAX_CTX_LEN - 1] = L'\0';
 
-		// °O¿ı½Õ¥Î
-		RecordCall(Call::cMessageBoxExA, CTX_STR, &ctxVal, Hash);
+		// è¨˜éŒ„å‡½æ•¸
+		RecordCall(Call::cMessageBoxExA, CTX_STR, &ctxVal, Hash, RetAddr);
 
 #ifdef __DEBUG_PRINT
 		printf("MessageBoxExA detected: %s - %s (language: %d)\n", lpCaption, lpText, wLanguageId);
 #endif
-		// §ä¨ì¹ïÀ³ªºMutation
-		Mutation* mut = FindMutation(mutMessageBoxExA, CTX_STR, &ctxVal);
+		// å°‹æ‰¾å¯èƒ½çš„Mutation
+		Mutation* mut = FindMutation(mutMessageBoxExA, CTX_STR, &ctxVal, Hash);
 		if (mut != NULL) {
 			if (mut->mutType == MUT_ALT_NUM) {
 #ifdef __DEBUG_PRINT
 				printf("Applying MUT_ALT_NUM mutation to MessageBoxExA.\n");
 #endif
 				if (flag) { (*flag) = FALSE; }
-				// ±j¨î§ó§ï¨ç¼Æªº¦^¶Ç­È
+				// è¿”å›æŒ‡å®šçš„å›å‚³å€¼
 				return (int)mut->mutValue.nValue;
 			}
 		}
 
-		// °õ¦æ­ì©l¨ç¼Æ
+		// åŸ·è¡ŒåŸå‡½æ•¸
 		ret = OgMessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId);
 		if (flag) (*flag) = FALSE;
 		return ret;
 	}
 
-	// ¦pªG¤£»İ­nhook«h°õ¦æ­ì©l¨ç¼Æ
+	// å¦‚æœä¸éœ€hookå‰‡åŸ·è¡ŒåŸå‡½æ•¸
 	ret = OgMessageBoxExA(hWnd, lpText, lpCaption, uType, wLanguageId);
 	if (flag) (*flag) = FALSE;
 	return ret;
