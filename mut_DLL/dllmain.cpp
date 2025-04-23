@@ -42,6 +42,8 @@ BYTE* TargetEnd = NULL;
 // chld
 LPVOID pLoadLibraryA = NULL;
 
+UINT64 ImageBase = 0;
+
 int GetKeyNameFromHandle(HANDLE key, wchar_t* dest, PULONG size)
 {
 	if (key == NULL) {
@@ -196,6 +198,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			if (wcsstr(FileName, ModuleEntry.szModule)) {
 				// get module address
 				//printf("ModuleName: %ws\n", ModuleEntry.szModule);
+				ImageBase = (UINT64)ModuleEntry.modBaseAddr;
 				//printf("Module Base Addr: %p\n", ModuleEntry.modBaseAddr);
 				//printf("Module Base Size: %lu\n", ModuleEntry.modBaseSize);
 				TargetBase = ModuleEntry.modBaseAddr;

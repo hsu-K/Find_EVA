@@ -63,25 +63,34 @@ public:
 	// 檢查Mutation是否已經存在
 	static BOOL MutationExists(Recording* rec)
 	{
+		//std::cout << "find " << DebugCallNames[rec->call] << ", origin from: " << rec->origin << std::endl;
 		std::shared_ptr<Frame> frameCurr = GlobalState::GetInst()->get_frameCurr();
 		Mutation* loop = frameCurr->mutHead;
+
 		while (loop != nullptr) {
+			//std::cout << DebugCallNames[loop->rec.call] << ", origin from: " << loop->rec.origin << std::endl;
 			if (loop->rec.call == rec->call) {
 				if (rec->type == CTX_NUM) {
 					if (loop->rec.value.dwCtx == rec->value.dwCtx) {
-						// context match
-						return TRUE;
+						if (loop->rec.origin == rec->origin) {
+							// context match
+							return TRUE;
+						}
 					}
 				}
 				else if (rec->type == CTX_STR) {
 					if (wcsncmp(loop->rec.value.szCtx, rec->value.szCtx, MAX_CTX_LEN) == 0) {
-						// context match
-						return TRUE;
+						if (loop->rec.origin == rec->origin) {
+							// context match
+							return TRUE;
+						}
 					}
 				}
 				else if (rec->type == CTX_NONE) {
-					// call ID match
-					return TRUE;
+					if (loop->rec.origin == rec->origin) {
+						// context match
+						return TRUE;
+					}
 				}
 			}
 			loop = loop->next;
@@ -94,19 +103,25 @@ public:
 			if (loop->rec.call == rec->call) {
 				if (rec->type == CTX_NUM) {
 					if (loop->rec.value.dwCtx == rec->value.dwCtx) {
-						// context match
-						return TRUE;
+						if (loop->rec.origin == rec->origin) {
+							// context match
+							return TRUE;
+						}
 					}
 				}
 				else if (rec->type == CTX_STR) {
 					if (wcsncmp(loop->rec.value.szCtx, rec->value.szCtx, MAX_CTX_LEN) == 0) {
-						// context match
-						return TRUE;
+						if (loop->rec.origin == rec->origin) {
+							// context match
+							return TRUE;
+						}
 					}
 				}
 				else if (rec->type == CTX_NONE) {
-					// call ID match
-					return TRUE;
+					if (loop->rec.origin == rec->origin) {
+						// context match
+						return TRUE;
+					}
 				}
 			}
 			loop = loop->next;

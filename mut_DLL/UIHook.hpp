@@ -400,9 +400,10 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 	int ret;
 	BOOL* flag = NULL;
 	UINT64 Hash;
+	UINT64 RetAddr = 0;
 
 	// 檢查是否需要記錄此調用
-	if (!SkipActivity(&Hash)) {
+	if (!SkipActivity(&Hash, &RetAddr)) {
 		flag = EnterHook();
 
 		// 記錄調用資訊
@@ -425,19 +426,20 @@ int WINAPI HookMessageBoxW(HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uT
 		ctxVal.szCtx[capLen + 1 + textLen] = L'\0';
 
 		// 記錄調用
-		RecordCall(Call::cMessageBoxW, CTX_STR, &ctxVal, Hash);
+		RecordCall(Call::cMessageBoxW, CTX_STR, &ctxVal, Hash, RetAddr);
 
 #ifdef __DEBUG_PRINT
 		printf("MessageBoxW detected: %ws - %ws\n", lpCaption, lpText);
 #endif
 		// 找到對應的Mutation
-		Mutation* mut = FindMutation(mutMessageBoxW, CTX_STR, &ctxVal);
+		Mutation* mut = FindMutation(mutMessageBoxW, CTX_STR, &ctxVal, Hash);
 		if (mut != NULL) {
 			if (mut->mutType == MUT_ALT_NUM) {
 #ifdef __DEBUG_PRINT
 				printf("Applying MUT_FAIL mutation to NtOpenKey.\n");
 #endif
 				if (flag) { (*flag) = FALSE; }
+				//std::cout << "強制突變，位置: 0x" << std::hex << Call_from << std::dec << std::endl;
 				// 強制更改函數的回傳值
 				return (NTSTATUS)mut->mutValue.nValue;
 			}

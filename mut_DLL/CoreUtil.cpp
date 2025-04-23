@@ -2,7 +2,7 @@
 #include "CoreUtil.hpp"
 
 // 用於判斷是否要跳過某個活動的記錄，主要用於 Hook 機制中，並返回一個布林值和一個 Hash 值
-BOOL SkipActivity(UINT64* Hash)
+BOOL SkipActivity(UINT64* Hash, UINT64* ret_addr)
 {
 	BOOL* flag;
 	// 判斷當前線程索引是否已經有創建TLS，如果沒有就直接返回FALSE
@@ -30,6 +30,13 @@ BOOL SkipActivity(UINT64* Hash)
 		(*Hash) = 0; // init
 		// 獲取當前執行緒的呼叫堆疊追蹤
 		WORD cap = RtlCaptureStackBackTrace(1, MAX_TRACE_DEPTH, trace, NULL); // no hash
+		// 取得呼叫此函數的位置
+		if (ret_addr != nullptr && cap >= 1) {
+			if (trace[1] >= TargetBase && trace[1] <= TargetEnd) {
+				*ret_addr = (UINT64)trace[1] - ImageBase;
+			}
+		}
+
 		for (WORD i = 0; i < cap; i++) {
 			// 計算在目標程式範圍內的呼叫的Hash值
 			if (trace[i] >= TargetBase && trace[i] <= TargetEnd) {
@@ -84,9 +91,29 @@ int RecordCall(Call c, ContextType type, ContextValue* value, UINT64 hash) {
 	return 1;
 }
 
+int RecordCall(Call c, ContextType type, ContextValue* value, UINT64 hash, UINT64 ret_addr) {
+	//std::cout << "RecordCall with ret_addr" << std::endl;
+	Recording rec;
+	rec.call = c;
+	rec.type = type;
+
+	if (type != CTX_NONE && value != NULL) {
+		rec.value = *value;
+	}
+
+	// 紀錄origin為hash，利用呼叫堆疊來當作來源判斷
+	rec.origin = hash;
+	rec.ret_addr = ret_addr;
+
+	DWORD dwWritten;
+	// 寫入pipe
+	WriteFile(hPipe, (void*)&rec, sizeof(rec), &dwWritten, NULL);
+	return 1;
+}
+
 // find a mutation in the list for a specific call, starting from a specific start point
 // 依照CTX的內容，找到對應的Mutation
-Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxValue)
+Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxValue, UINT64 origin)
 {
 	// we need to match the context to find whether there is a mutation.
 	// the context is found in the call hook, and then sent here, we loop through the mutations to match.
@@ -110,9 +137,13 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 	if (ctxType == CTX_NUM) {
 		while (loop != NULL) {
 			if (loop->rec.value.dwCtx == ctxValue->dwCtx) {
+				if (origin != 0 && loop->rec.origin == origin) {
+					break;
+				}
+				else if (origin == 0) {
+					break;
+				}
 				// context match
-				break;
-				return loop;
 			}
 			loop = loop->next;
 		}
@@ -129,8 +160,12 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 				_wcslwr_s(tempBuffer, MAX_CTX_LEN);
 				if (wcsstr(tempBuffer, loop->rec.value.szCtx) != NULL) { // is target a substring of ctx?
 					// context match
-					break;
-					return loop;
+					if (origin != 0 && loop->rec.origin == origin) {
+						break;
+					}
+					else if (origin == 0) {
+						break;
+					}
 				}
 			}
 			else { // CTX_STR
@@ -138,8 +173,12 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 				//cout << "loop->rec.value.szCtx: " << loop->rec.value.szCtx << " ctxValue->szCtx: " << ctxValue->szCtx << endl;
 				if (wcsncmp(loop->rec.value.szCtx, ctxValue->szCtx, MAX_CTX_LEN) == 0) {
 					// context match
-					break;
-					return loop;
+					if (origin != 0 && loop->rec.origin == origin) {
+						break;
+					}
+					else if (origin == 0) {
+						break;
+					}
 				}
 			}
 			loop = loop->next;
@@ -149,7 +188,7 @@ Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxVa
 		printf(" / Find the Mutation\n");
 	}
 	else {
-		printf(" / Not fimd the Mutation\n");
+		printf(" / Not find the Mutation\n");
 	}
 	printf("---------------------------------------------\n");
 

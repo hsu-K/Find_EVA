@@ -23,5 +23,6 @@ public:
 	ContextType type;
 	ContextValue value;
 	UINT64 origin;
+	UINT64 ret_addr = 0;
 };
 

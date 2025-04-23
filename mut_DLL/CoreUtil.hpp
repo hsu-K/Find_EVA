@@ -17,11 +17,13 @@ extern volatile ULONG TimeShift;
 extern double dFreq;
 extern BYTE* TargetBase;
 extern BYTE* TargetEnd;
+extern UINT64 ImageBase;
 
 // ¨ç¼ÆÁn©ú
-BOOL SkipActivity(UINT64* Hash);
+BOOL SkipActivity(UINT64* Hash, UINT64* ret_addr=nullptr);
 BOOL* EnterHook();
 int GetKeyNameFromHandle(HANDLE key, wchar_t* dest, PULONG size);
 int GetFileNameFromHandle(HANDLE file, wchar_t* dest, PULONG size);
 int RecordCall(Call c, ContextType type, ContextValue* value, UINT64 hash);
-Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxValue);
+int RecordCall(Call c, ContextType type, ContextValue* value, UINT64 hash, UINT64 ret_addr);
+Mutation* FindMutation(Mutation* start, ContextType ctxType, ContextValue* ctxValue, UINT64 origin = 0);

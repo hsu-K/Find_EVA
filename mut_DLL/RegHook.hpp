@@ -18,9 +18,10 @@ NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJ
 	// 檢查傳入的ObjectAttributes是否為空
 	if (ObjectAttributes && ObjectAttributes->ObjectName != NULL) {
 		UINT64 Hash;
+		UINT64 RetAddr;
 
 		// 利用SkipActivity來決定是否要記錄這次的調用，避免Hook又Hook
-		if (!SkipActivity(&Hash)) {
+		if (!SkipActivity(&Hash, &RetAddr)) {
 			// 紀錄已經進入Hook
 			flag = EnterHook();
 			ContextValue ctxVal;
@@ -35,10 +36,10 @@ NTSTATUS NTAPI HookNtOpenKey(PHANDLE pKeyHandle, ACCESS_MASK DesiredAccess, POBJ
 
 			//cout << ctxVal.szCtx << endl;
 			// 紀錄Call，並回傳給主程式紀錄
-			RecordCall(Call::cNtOpenKey, CTX_STR, &ctxVal, Hash);
+			RecordCall(Call::cNtOpenKey, CTX_STR, &ctxVal, Hash, RetAddr);
 
 			// 找到對應的Mutation
-			Mutation* mut = FindMutation(mutNtOpenKey, CTX_STR, &ctxVal);
+			Mutation* mut = FindMutation(mutNtOpenKey, CTX_STR, &ctxVal, Hash);
 			if (mut != NULL) {
 				if (mut->mutType == MUT_FAIL) {
 #ifdef __DEBUG_PRINT

@@ -66,6 +66,7 @@ void PrintMutation(Mutation* mut, FILE* fp)
 		case MUT_ALT_NUM: { fprintf(fp, "\t-> ALT: %lu\n", mut->mutValue.nValue); } break;
 		}
 	}
+	fprintf(fp, "\t-> RetAddr: 0x%llx\n", mut->rec.ret_addr);
 }
 
 // 輸出Recording到輸出文件
