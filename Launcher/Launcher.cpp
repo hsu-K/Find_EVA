@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 
 	// choose the best baseExec as the frameCurr
 	CalculateUtil::chooseBestCallCounts(GlobalState::GetInst()->get_frameCurr(), base2.get(), base3.get(), base3.get());
-
+	Execution* base = GlobalState::GetInst()->get_frameCurr()->currExec;
 
 #ifdef __EXPERIMENT
 	printf("----------------------__EXPERIMENT------------------------\n");
@@ -82,8 +82,12 @@ int main(int argc, char* argv[])
 	ULONG volapplied = 0;
 
 	int exit = CoreUtil::RunExploration(path, GlobalState::GetInst()->get_frameCurr()->currExec, &cycles, &volapplied);
+	//Execution* currExec = GlobalState::GetInst()->get_frameCurr()->currExec;
+	//std::cout << GlobalState::GetInst()->get_frameCurr()->currExec << std::endl;
+	//std::cout << GlobalState::GetInst()->get_frameCurr()->firstExec << std::endl;
+	//OutputExperimentPhase3(baseExec, frameBest->firstExec, frameBest->currExec, path, base1cnt, base2cnt, base3cnt, cycles, exit, &BT, volapplied);
 
-
+	LogUtil::OutputExperiment(base, GlobalState::GetInst()->get_frameBest()->currExec, path, cycles, exit, volapplied);
 	//system("pause");
 	threadManager.stopListenerThread();
 	return 0;

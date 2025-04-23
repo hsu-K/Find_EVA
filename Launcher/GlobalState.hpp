@@ -52,6 +52,13 @@ public:
 	DWORD* get_pids() { return pids; }
 	void set_pids(DWORD pid, DWORD ctx) { pids[pid] = ctx; }
 
+	std::vector<std::shared_ptr<Execution>>& get_executions() { return executions; }
+	//void push_executions(std::shared_ptr<Execution> exec) {
+	//	executions.push_back(exec);
+	//}
+	//void pop_executions() {
+	//	executions.pop_back();
+	//}
 
 	void addThread(std::shared_ptr<std::thread> thread);
 
@@ -72,9 +79,10 @@ private:
 	std::shared_ptr<Frame> frameCurr;
 	std::shared_ptr<Frame> frameBest;
 	std::shared_ptr<HANDLE> SyncEvent;
+	std::vector<std::shared_ptr<Execution>> executions;
 	DWORD pidptr = 0;
 	DWORD pids[MAX_CHILD] = { 0 };
-
+	/*std::vector<std::shared_ptr<Execution>> executions;*/
 	std::vector<std::shared_ptr<std::thread>> threadPool;
 	std::vector<HANDLE> threadNativeHandles;  // 存儲線程的原生句柄
 	// 保護線程池的互斥鎖

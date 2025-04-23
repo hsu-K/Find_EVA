@@ -275,7 +275,8 @@ public:
 
 		
 		// to store newExec
-		std::vector<std::shared_ptr<Execution>> executions;
+		//std::vector<std::shared_ptr<Execution>> executions;
+		std::vector<std::shared_ptr<Execution>>& executions = GlobalState::GetInst()->get_executions();
 		std::shared_ptr<Execution> newExec = nullptr;
 		while (CurTime < EndTime) {
 			getMut = FALSE;
@@ -284,10 +285,13 @@ public:
 			// 如果當前的執行是第一次執行，則將第一次執行設置為當前執行，並且初始化時base->next 不會被設置
 			if (frameCurr->currExec == baseExec) {
 				newExec = std::make_shared<Execution>(baseExec, nullptr, TRUE);
+				frameCurr->firstExec = newExec.get();
 			}
 			else {
 				newExec = std::make_shared<Execution>(frameCurr->currExec, nullptr, FALSE);
 			}
+			//GlobalState::GetInst()->push_executions(newExec);
+			//std::cout << newExec.get() << std::endl;
 			executions.push_back(newExec);
 			frameCurr->currExec = newExec.get();
 			
@@ -348,17 +352,16 @@ public:
 						// 回溯到上一個Exec，如果先現在就是firstExec就回復baseExec
 						if (frameCurr->currExec == frameCurr->firstExec) {
 							// the first exec has no prev.
+							//GlobalState::GetInst()->pop_executions();
 							executions.pop_back();
-							//DestroyExecution(frameCurr->currExec);
 							frameCurr->currExec = baseExec;
 							frameCurr->firstExec = nullptr;
 						}
 						else {
 							// reset currExec back to prev
-							//temp = frameCurr->currExec->prev;
-							//DestroyExecution(frameCurr->currExec);
-							//frameCurr->currExec = temp;
+							//GlobalState::GetInst()->pop_executions();
 							executions.pop_back();
+							//frameCurr->currExec = GlobalState::GetInst()->get_executions().back().get();
 							frameCurr->currExec = executions.back().get();
 							frameCurr->currExec->next = nullptr;
 						}

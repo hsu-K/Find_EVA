@@ -33,10 +33,12 @@ BOOL SkipActivity(UINT64* Hash)
 		for (WORD i = 0; i < cap; i++) {
 			// 計算在目標程式範圍內的呼叫的Hash值
 			if (trace[i] >= TargetBase && trace[i] <= TargetEnd) {
+				//std::cout << "0x" << std::hex << (UINT32)trace[i] << std::dec << std::endl;
 				(*Hash) += (UINT32)trace[i];
 				allforeign = FALSE;
 			}
 		}
+		//std::cout << std::endl;
 		return allforeign; // skip unless the backtrace validates domestic
 	}
 	return FALSE;

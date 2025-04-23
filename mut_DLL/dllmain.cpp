@@ -42,7 +42,6 @@ BYTE* TargetEnd = NULL;
 // chld
 LPVOID pLoadLibraryA = NULL;
 
-
 int GetKeyNameFromHandle(HANDLE key, wchar_t* dest, PULONG size)
 {
 	if (key == NULL) {
