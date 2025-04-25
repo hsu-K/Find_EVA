@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
 	GlobalState::GetInst()->get_frameCurr()->currExec = baseExec.get();
 
 	GlobalState::GetInst()->set_SyncEvent(std::make_shared<HANDLE>(CreateEventW(NULL, FALSE, FALSE, L"StopThreads")));
+
 	ThreadManager threadManager;
 	threadManager.startListenerThread();
 
@@ -82,13 +83,9 @@ int main(int argc, char* argv[])
 	ULONG volapplied = 0;
 
 	int exit = CoreUtil::RunExploration(path, GlobalState::GetInst()->get_frameCurr()->currExec, &cycles, &volapplied);
-	//Execution* currExec = GlobalState::GetInst()->get_frameCurr()->currExec;
-	//std::cout << GlobalState::GetInst()->get_frameCurr()->currExec << std::endl;
-	//std::cout << GlobalState::GetInst()->get_frameCurr()->firstExec << std::endl;
-	//OutputExperimentPhase3(baseExec, frameBest->firstExec, frameBest->currExec, path, base1cnt, base2cnt, base3cnt, cycles, exit, &BT, volapplied);
 
 	LogUtil::OutputExperiment(base, GlobalState::GetInst()->get_frameBest()->currExec, path, cycles, exit, volapplied);
-	//system("pause");
+
 	threadManager.stopListenerThread();
 	return 0;
 }

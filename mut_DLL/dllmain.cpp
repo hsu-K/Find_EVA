@@ -127,6 +127,17 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 #ifdef __DEBUG_PRINT
 		printf("Enviral DLL Loaded\n");
 #endif
+
+		
+		// 等待Pipe連接
+		if (!WaitNamedPipe(szPipeName, 20000)) {
+			fprintf(stderr, "Pipe wait failed: %x\n", GetLastError());
+			return -1;
+		}
+#ifdef __DEBUG_PRINT
+		printf("[Pipe C] WaitNamedPipe succeeded!\n");
+#endif
+
 		// pipe (createfile is connect)
 		// 創建管道配置
 		hPipe = CreateFile(szPipeName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -136,11 +147,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		}
 #ifdef __DEBUG_PRINT
 		printf("[Pipe C] Client connected to pipe: %p\n", hPipe);
-#endif
-		// 等待Pipe連接
-		WaitNamedPipe(szPipeName, 20000);
-#ifdef __DEBUG_PRINT
-		printf("[Pipe C] WaitNamedPipe succeeded!\n");
 #endif
 
 		// 將Pipe設置為read模式
@@ -155,9 +161,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		DWORD dwMutationCount;
 		DWORD dwRead;
 		// if NumBytesToRead is < the next message, readfile returns ERROR_MORE_DATA
-		// 從pipe讀取到Mutation的數量總數
+		//從pipe讀取到Mutation的數量總數
 		BOOL rd = ReadFile(hPipe, &dwMutationCount, sizeof(dwMutationCount), &dwRead, NULL);
 		if (rd) {
+
 #ifdef __DEBUG_PRINT
 			printf("[Pipe C] Mutation count: %lu\n", dwMutationCount);
 #endif
@@ -180,6 +187,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 			DWORD err = GetLastError();
 			fprintf(stderr, "Mutation Read Failed: %x\n", err);
 		}
+		
+
+
 
 		// Get the start address of the executable module
 

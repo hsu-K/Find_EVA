@@ -214,6 +214,15 @@ public:
 		// 設置線程同步資料
 		SetEvent(syncEventHandle);
 
+		HANDLE* hThreads = GlobalState::GetInst()->get_hThreads();
+		DWORD& dwThreadCount = GlobalState::GetInst()->get_dwThreadCount();
+		for (DWORD j = 0; j < dwThreadCount; j++) {
+			CancelSynchronousIo(hThreads[j]);
+			CloseHandle(hThreads[j]);
+		}
+
+		dwThreadCount = 0;
+		/*
 		// 獲取線程池大小
 		size_t threadCount = GlobalState::GetInst()->getThreadPoolSize();
 
@@ -246,6 +255,7 @@ public:
 		if (GlobalState::GetInst()->getThreadPoolSize() > 0) {
 			std::cerr << "警告: 仍有 " << GlobalState::GetInst()->getThreadPoolSize() << " 個線程未被關閉" << std::endl;
 		}
+		*/
 
 		// The SyncEvent will cancel the pipe communication, however the target process may still be running.
 		TerminateProcess(pi.hProcess, 0);

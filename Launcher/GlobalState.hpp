@@ -74,6 +74,13 @@ public:
 	// 取消線程的同步 I/O 操作
 	bool cancelThreadIO(size_t index);
 
+	// 回傳 hThreads 陣列的引用
+	HANDLE* get_hThreads() { return hThreads; }
+
+	// 回傳 dwThreadCount 的引用
+	DWORD& get_dwThreadCount() { return dwThreadCount; }
+
+
 private:
 	static std::shared_ptr<GlobalState> _instance;
 	std::shared_ptr<Frame> frameCurr;
@@ -87,5 +94,8 @@ private:
 	std::vector<HANDLE> threadNativeHandles;  // 存儲線程的原生句柄
 	// 保護線程池的互斥鎖
 	std::mutex threadPoolMutex;
+
+	HANDLE hThreads[MAX_CHILD];
+	DWORD dwThreadCount = 0;
 };
 

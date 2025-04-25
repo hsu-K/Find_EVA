@@ -9,6 +9,8 @@ public:
 	void startListenerThread();
 
 	void stopListenerThread();
+
+
 private:
 	DWORD WINAPI ListenerThreadEntry();
 
@@ -18,5 +20,11 @@ private:
 	std::shared_ptr<std::thread> _listenerThread;
 
 	std::atomic<bool> shouldTerminate{ false };
+
+	DWORD dwThreadId = 0;
+	HANDLE hListenerThread = NULL;
+
+	static DWORD WINAPI ListenerThread(LPVOID lpvParam);
+	static DWORD WINAPI ResponderThread(LPVOID lpvParam);
 };
 
