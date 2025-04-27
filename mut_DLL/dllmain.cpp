@@ -27,7 +27,11 @@ using namespace std;
 
 //#define __DEBUG_PRINT
 
+#ifdef _WIN64
+#pragma comment(lib, "include_x64/detours.lib")
+#else
 #pragma comment(lib, "include_x86/detours.lib")
+#endif
 
 HANDLE hPipe;
 DWORD dwTlsIndex;

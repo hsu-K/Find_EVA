@@ -180,7 +180,7 @@ public:
 		}
 	}
 
-	static BOOL GenerateResponsiveMutationsAll(Execution* exec) {
+	static BOOL GenerateStableMutationsAll(Execution* exec) {
 
 		// 設置exec的最後一次執行的變異(mutStore)為Frame當前的變異(mutCurr)
 		exec->mutStore = GetCurrentMutation();

@@ -10,7 +10,7 @@ ULONG_PTR GetJumpAddr(void* hookFuncAddr) {
 	ReadProcessMemory(GetCurrentProcess(), hookFuncAddr, jumpInstruction, sizeof(jumpInstruction), &bytesRead);
 	if (jumpInstruction[0] == 0xe9) { // e9 是相對跳轉指令
 		// 計算目標地址
-		ULONG_PTR offset = *(ULONG_PTR*)&jumpInstruction[1]; // 取得偏移量
+		ULONG_PTR offset = *(INT32*)&jumpInstruction[1]; // 取得偏移量
 		targetAddr = (ULONG_PTR)hookFuncAddr + 5 + offset; // 跳轉指令長度是 5
 		//std::cout << "最終函數地址: " << std::hex << targetAddr << std::endl;
 	}
@@ -137,7 +137,11 @@ bool InstallIATHook(const char* dllName, const char* funcName, void* hookFuncAdd
 	HMODULE hModule = GetModuleHandleA(NULL);
 
 	PIMAGE_DOS_HEADER ptrDosHeader = (PIMAGE_DOS_HEADER)hModule;
+#ifdef _WIN64
+	PIMAGE_NT_HEADERS64 ptrNtHeader = (PIMAGE_NT_HEADERS64)((ULONG_PTR)hModule + (ULONG_PTR)ptrDosHeader->e_lfanew);
+#else
 	PIMAGE_NT_HEADERS ptrNtHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)hModule + (ULONG_PTR)ptrDosHeader->e_lfanew);
+#endif
 	PIMAGE_OPTIONAL_HEADER ptrOptionHeader = &(ptrNtHeader->OptionalHeader);
 	IMAGE_DATA_DIRECTORY directory = ptrOptionHeader->DataDirectory[1];
 	PIMAGE_IMPORT_DESCRIPTOR pImageDescripor = (PIMAGE_IMPORT_DESCRIPTOR)((ULONG_PTR)hModule + (ULONG_PTR)directory.VirtualAddress);

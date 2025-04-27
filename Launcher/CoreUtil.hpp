@@ -331,7 +331,7 @@ public:
 			}
 
 			if (!getMut && vol) {
-				if (MutationController::GenerateResponsiveMutationsAll(frameCurr->currExec)) {
+				if (MutationController::GenerateStableMutationsAll(frameCurr->currExec)) {
 
 					// 如果這個Volatile突變可以觸發新的Mutation，則表示是有效的，需要保留
 					// 並且跳過下一個循環的突變生成，因為已經完成了
@@ -462,7 +462,7 @@ public:
 			}
 
 			if (!getMut) {
-				if (MutationController::GenerateResponsiveMutationsAll(frameCurr->currExec)) {
+				if (MutationController::GenerateStableMutationsAll(frameCurr->currExec)) {
 #ifdef __DEBUG_PRINT
 					printf("There are stable mutations to apply.\n");
 #endif
